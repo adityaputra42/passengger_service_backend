@@ -13,13 +13,14 @@ import (
 func main() {
 
 	cfg := config.Load()
-    dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s",
-		cfg.Database.Host,
-		cfg.Database.Port,
-		cfg.Database.User,
-		cfg.Database.Name,
-		cfg.Database.Password,
-	)
+    dsn := fmt.Sprintf(
+	"host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+	cfg.Database.Host,
+	cfg.Database.Port,
+	cfg.Database.User,
+	cfg.Database.Name,
+	cfg.Database.Password,
+)
  client, err :=  ent.Open("postgres",dsn)
     if err != nil {
         log.Fatalf("failed opening connection to postgres: %v", err)
