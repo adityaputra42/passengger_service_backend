@@ -28,7 +28,7 @@ func Connect(cfg *config.Config) error {
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger:                                   logger.Default.LogMode(logger.Info),
 		DisableForeignKeyConstraintWhenMigrating: false,
-		PrepareStmt:                              true, // cache prepared statements → faster repeated queries
+		PrepareStmt:                              true,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
@@ -50,21 +50,32 @@ func Connect(cfg *config.Config) error {
 
 // ─────────────────────────────────────────────
 // AutoMigrate
+// Urutan wajib dijaga: tabel tanpa FK → tabel dengan FK → many2many
 // ─────────────────────────────────────────────
 
 func Migrate() error {
-	// Order matters: tables with no FK dependencies go first
 	err := DB.AutoMigrate(
-		&models.User{},        // no FK
-		&models.Aircraft{},    // no FK
-		&models.Airport{},     // no FK
-		&models.Passenger{},   // no FK (maps to "Passengger" table via TableName())
-		&models.Seat{},        // FK → Aircraft
-		&models.Flight{},      // FK → Aircraft, Airport x2
-		&models.FlightSeat{},  // FK → Flight, Seat
-		&models.Booking{},     // FK → User, Flight
+		// ── Tier 0: tidak ada FK sama sekali ──────────────────
+		&models.Permission{}, // tabel "permissions", no FK
+		&models.Airport{},    // tabel "Airport", no FK
+		&models.Aircraft{},   // tabel "Aircraft", no FK
+		&models.Passenger{},  // tabel "Passengger", no FK
+
+		// ── Tier 1: FK ke Tier 0 ──────────────────────────────
+		&models.Role{},       // tabel "roles", many2many → permissions (role_permissions junction)
+		&models.Seat{},       // FK → Aircraft
+
+		// ── Tier 2: FK ke Tier 1 ──────────────────────────────
+		&models.User{},       // FK → roles (RoleID)
+		&models.Flight{},     // FK → Aircraft, Airport x2
+
+		// ── Tier 3: FK ke Tier 2 ──────────────────────────────
+		&models.FlightSeat{}, // FK → Flight, Seat
+		&models.Booking{},    // FK → User, Flight
+
+		// ── Tier 4: FK ke Tier 3 ──────────────────────────────
 		&models.BookingPassenger{}, // FK → Booking, Passenger, FlightSeat
-		&models.Payment{},     // FK → Booking
+		&models.Payment{},          // FK → Booking
 	)
 	if err != nil {
 		return fmt.Errorf("failed to run AutoMigrate: %w", err)
@@ -87,14 +98,56 @@ func createIndexes() error {
 		name string
 		sql  string
 	}{
+		// ── Permission ────────────────────────────────────────
+		{
+			"idx_permission_name",
+			`CREATE UNIQUE INDEX IF NOT EXISTS idx_permission_name ON permissions(name)`,
+		},
+		{
+			"idx_permission_resource_action",
+			// Composite: cari semua action dalam satu resource (e.g., "flights.*")
+			`CREATE INDEX IF NOT EXISTS idx_permission_resource_action ON permissions(resource, action)`,
+		},
+
+		// ── Role ──────────────────────────────────────────────
+		{
+			"idx_role_name",
+			`CREATE UNIQUE INDEX IF NOT EXISTS idx_role_name ON roles(name)`,
+		},
+		{
+			"idx_role_level",
+			// Filter/sort berdasarkan hierarki role
+			`CREATE INDEX IF NOT EXISTS idx_role_level ON roles(level)`,
+		},
+		{
+			"idx_role_system",
+			`CREATE INDEX IF NOT EXISTS idx_role_system ON roles(is_system_role)`,
+		},
+
+		// ── role_permissions (junction table) ─────────────────
+		{
+			"idx_roleperm_role",
+			`CREATE INDEX IF NOT EXISTS idx_roleperm_role ON role_permissions(role_id)`,
+		},
+		{
+			"idx_roleperm_permission",
+			`CREATE INDEX IF NOT EXISTS idx_roleperm_permission ON role_permissions(permission_id)`,
+		},
+
 		// ── User ──────────────────────────────────────────────
 		{
 			"idx_user_email",
 			`CREATE UNIQUE INDEX IF NOT EXISTS idx_user_email ON "User"(email)`,
 		},
 		{
+			"idx_user_role_id",
+			// role_id menggantikan kolom role (string) — FK lookup
+			`CREATE INDEX IF NOT EXISTS idx_user_role_id ON "User"(role_id)`,
+		},
+		{
 			"idx_user_role_created",
-			`CREATE INDEX IF NOT EXISTS idx_user_role_created ON "User"(role, created_at)`,
+			// Paginasi user per role, urut terbaru
+			`CREATE INDEX IF NOT EXISTS idx_user_role_created ON "User"(role_id, created_at)`,
 		},
 
 		// ── Airport ───────────────────────────────────────────
@@ -116,10 +169,12 @@ func createIndexes() error {
 		// ── Seat ──────────────────────────────────────────────
 		{
 			"idx_seat_aircraft_class",
+			// Cari semua kursi economy/business/first di satu pesawat
 			`CREATE INDEX IF NOT EXISTS idx_seat_aircraft_class ON "Seat"(aircraft_id, seat_class)`,
 		},
 		{
 			"idx_seat_aircraft_number",
+			// Cegah nomor kursi duplikat di pesawat yang sama
 			`CREATE UNIQUE INDEX IF NOT EXISTS idx_seat_aircraft_number ON "Seat"(aircraft_id, seat_number)`,
 		},
 
@@ -130,10 +185,12 @@ func createIndexes() error {
 		},
 		{
 			"idx_flight_dep_arr_time",
+			// Query utama: cari penerbangan CGK → DPS tanggal tertentu
 			`CREATE INDEX IF NOT EXISTS idx_flight_dep_arr_time ON "Flight"(departure_airport_id, arrival_airport_id, departure_time)`,
 		},
 		{
 			"idx_flight_status_departure",
+			// Filter penerbangan aktif/scheduled yang akan datang
 			`CREATE INDEX IF NOT EXISTS idx_flight_status_departure ON "Flight"(status, departure_time)`,
 		},
 		{
@@ -144,11 +201,12 @@ func createIndexes() error {
 		// ── FlightSeat ────────────────────────────────────────
 		{
 			"idx_flightseat_flight_status",
-			// Most critical: searching available seats for a flight
+			// Query terpenting: ambil kursi tersedia untuk satu penerbangan
 			`CREATE INDEX IF NOT EXISTS idx_flightseat_flight_status ON "FlightSeat"(flight_id, status)`,
 		},
 		{
 			"idx_flightseat_flight_seat",
+			// Cegah satu seat muncul dua kali di flight yang sama
 			`CREATE UNIQUE INDEX IF NOT EXISTS idx_flightseat_flight_seat ON "FlightSeat"(flight_id, seat_id)`,
 		},
 
@@ -159,14 +217,17 @@ func createIndexes() error {
 		},
 		{
 			"idx_booking_user_status",
+			// Riwayat booking seorang user berdasarkan status
 			`CREATE INDEX IF NOT EXISTS idx_booking_user_status ON "booking"(user_id, status)`,
 		},
 		{
 			"idx_booking_flight_status",
+			// Berapa tiket terjual per penerbangan
 			`CREATE INDEX IF NOT EXISTS idx_booking_flight_status ON "booking"(flight_id, status)`,
 		},
 		{
 			"idx_booking_status_created",
+			// Admin: list semua booking pending urut terbaru
 			`CREATE INDEX IF NOT EXISTS idx_booking_status_created ON "booking"(status, created_at)`,
 		},
 
@@ -181,7 +242,7 @@ func createIndexes() error {
 		},
 		{
 			"idx_bookingpax_flightseat",
-			// Prevent double-booking the same seat in the same booking
+			// Satu flight seat hanya boleh ada di satu booking — mencegah double-booking di level DB
 			`CREATE UNIQUE INDEX IF NOT EXISTS idx_bookingpax_flightseat ON "Booking Passengger"(flight_seat_id)`,
 		},
 
