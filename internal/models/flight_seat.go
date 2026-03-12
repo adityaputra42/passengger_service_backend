@@ -9,17 +9,22 @@ import (
 // FlightSeat
 // ─────────────────────────────────────────────
 
-type FlightSeat struct {
-	ID       uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
-	FlightID uuid.UUID `gorm:"type:uuid;not null;column:flight_id" json:"flight_id" validate:"required"`
-	SeatID   uuid.UUID `gorm:"type:uuid;not null;column:seat_id" json:"seat_id" validate:"required"`
-	Price    float64   `gorm:"not null;column:price" json:"price" validate:"required,gt=0"`
-	// true = available, false = booked
-	Status bool `gorm:"not null;column:status" json:"status"`
+type FlightSeatStatus string
 
-	// Relations
-	Flight Flight `gorm:"foreignKey:FlightID" json:"flight,omitempty"`
-	Seat   Seat   `gorm:"foreignKey:SeatID" json:"seat,omitempty"`
+const (
+	FlightSeatAvailable FlightSeatStatus = "available"
+	FlightSeatLocked    FlightSeatStatus = "locked"
+	FlightSeatBooked    FlightSeatStatus = "booked"
+)
+
+type FlightSeat struct {
+	ID             uuid.UUID        `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	FlightID       *uuid.UUID       `gorm:"type:uuid;index"                                  json:"flight_id"`
+	AircraftSeatID *uuid.UUID       `gorm:"type:uuid"                                        json:"aircraft_seat_id"`
+	Price          float64          `gorm:"type:numeric(10,2)"                               json:"price"   validate:"min=0"`
+	Status         FlightSeatStatus `gorm:"type:varchar(20);default:available"               json:"status"  validate:"oneof=available locked booked"`
+	Flight         *Flight          `gorm:"foreignKey:FlightID"                              json:"flight,omitempty"`
+	AircraftSeat   *AircraftSeat    `gorm:"foreignKey:AircraftSeatID"                        json:"aircraft_seat,omitempty"`
 }
 
 func (fs *FlightSeat) BeforeCreate(tx *gorm.DB) error {

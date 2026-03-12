@@ -46,12 +46,6 @@ cfg:=	config.Load()
 	}
 	logger.Info("✅ Database connected successfully")
 
-	logger.Info("🔄 Running database migrations...")
-	if err := db.Migrate(); err != nil {
-		logger.Fatal("Failed to migrate database", zap.Error(err))
-	}
-	logger.Info("✅ Migrations completed")
-
 	logger.Info("🌱 Running database seeders...")
 	if err := db.SeedDatabase(); err != nil {
 		logger.Fatal("Failed to seed database", zap.Error(err))

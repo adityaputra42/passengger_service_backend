@@ -7,24 +7,16 @@ import (
 	"gorm.io/gorm"
 )
 
-// ─────────────────────────────────────────────
-// User
-// ─────────────────────────────────────────────
-
-
 
 type User struct {
-	UID          uuid.UUID `gorm:"type:uuid;primaryKey;column:uid" json:"uid"`
-	Email        string    `gorm:"type:varchar(255);uniqueIndex;not null;column:email" json:"email" validate:"required,email,max=255"`
-	FullName     string    `gorm:"type:varchar(255);not null;column:full_name" json:"full_name" validate:"required,min=2,max=255"`
-	PasswordHash string    `gorm:"type:varchar(255);not null;column:password_hash" json:"-"`
-	RoleID       uint      `json:"role_id" gorm:"not null;index"`
-	CreatedAt    time.Time `gorm:"autoCreateTime;column:created_at" json:"created_at"`
-	UpdatedAt    time.Time `gorm:"autoUpdateTime;column:updated_at" json:"updated_at"`
-	Role         Role      `json:"role" gorm:"foreignKey:RoleID"`
-
-	// Relations
-	Bookings []Booking `gorm:"foreignKey:UserID" json:"bookings,omitempty"`
+	UID          uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"uid"`
+	Email        string    `gorm:"type:varchar(255);uniqueIndex;not null"           json:"email"          validate:"required,email,max=255"`
+	FullName     string    `gorm:"type:varchar(255);not null"                       json:"full_name"      validate:"required,min=2,max=255"`
+	PasswordHash string    `gorm:"type:varchar(255);not null"                       json:"-"`
+	RoleID       uint      `gorm:"not null;index"                                   json:"role_id"        validate:"required"`
+	CreatedAt    time.Time `gorm:"autoCreateTime"                                   json:"created_at"`
+	UpdatedAt    time.Time `gorm:"autoUpdateTime"                                   json:"updated_at"`
+	Role         Role      `gorm:"foreignKey:RoleID"                                json:"role,omitempty"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
@@ -33,7 +25,6 @@ func (u *User) BeforeCreate(tx *gorm.DB) error {
 	}
 	return nil
 }
-
 
 
 type UserInput struct {
@@ -75,7 +66,7 @@ type UserListResponse struct {
 }
 
 type UserListRequest struct {
-	UserId *uint
+	UserId *uuid.UUID
 	Limit  int
 	Page   int
 	SortBy string

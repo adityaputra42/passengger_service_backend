@@ -3,13 +3,13 @@ package db
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"passenger_service_backend/internal/models"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-// SeedDatabase is the main entry point. Skips if already seeded.
 func SeedDatabase() error {
 	var count int64
 	DB.Model(&models.Permission{}).Count(&count)
@@ -20,29 +20,27 @@ func SeedDatabase() error {
 
 	log.Println("Starting database seeding...")
 
-	if err := seedPermissions(); err != nil {
-		return fmt.Errorf("seedPermissions: %w", err)
+	steps := []struct {
+		name string
+		fn   func() error
+	}{
+		{"permissions", seedPermissions},
+		{"roles", seedRoles},
+		{"users", seedUsers},
+		{"seat_classes", seedSeatClasses},
+		{"ssr_types", seedSSRTypes},
+		{"meals", seedMeals},
+		{"airports", seedAirports},
+		{"aircrafts", seedAircrafts},
+		{"flight_schedules", seedFlightSchedules},
+		{"flights", seedFlights},
+		{"pnr_demo", seedDemoPNR},
 	}
-	if err := seedRoles(); err != nil {
-		return fmt.Errorf("seedRoles: %w", err)
-	}
-	if err := seedAirports(); err != nil {
-		return fmt.Errorf("seedAirports: %w", err)
-	}
-	if err := seedAircrafts(); err != nil {
-		return fmt.Errorf("seedAircrafts: %w", err)
-	}
-	if err := seedUsers(); err != nil {
-		return fmt.Errorf("seedUsers: %w", err)
-	}
-	if err := seedPassengers(); err != nil {
-		return fmt.Errorf("seedPassengers: %w", err)
-	}
-	if err := seedFlights(); err != nil {
-		return fmt.Errorf("seedFlights: %w", err)
-	}
-	if err := seedBookings(); err != nil {
-		return fmt.Errorf("seedBookings: %w", err)
+
+	for _, step := range steps {
+		if err := step.fn(); err != nil {
+			return fmt.Errorf("seed %s: %w", step.name, err)
+		}
 	}
 
 	log.Println("Database seeding completed successfully.")
@@ -61,7 +59,7 @@ func seedPermissions() error {
 		{Name: "users.update", Resource: "users", Action: "update", Description: "Update user data"},
 		{Name: "users.delete", Resource: "users", Action: "delete", Description: "Delete users"},
 		// Roles
-		{Name: "roles.create", Resource: "roles", Action: "create", Description: "Create new roles"},
+		{Name: "roles.create", Resource: "roles", Action: "create", Description: "Create roles"},
 		{Name: "roles.read", Resource: "roles", Action: "read", Description: "View roles"},
 		{Name: "roles.update", Resource: "roles", Action: "update", Description: "Update roles"},
 		{Name: "roles.delete", Resource: "roles", Action: "delete", Description: "Delete roles"},
@@ -85,29 +83,30 @@ func seedPermissions() error {
 		{Name: "flights.read", Resource: "flights", Action: "read", Description: "View all flights"},
 		{Name: "flights.update", Resource: "flights", Action: "update", Description: "Update flights"},
 		{Name: "flights.delete", Resource: "flights", Action: "delete", Description: "Delete flights"},
+		// PNR
+		{Name: "pnr.create", Resource: "pnr", Action: "create", Description: "Create PNR / booking"},
+		{Name: "pnr.read", Resource: "pnr", Action: "read", Description: "View all PNRs"},
+		{Name: "pnr.read_own", Resource: "pnr", Action: "read_own", Description: "View own PNRs"},
+		{Name: "pnr.update", Resource: "pnr", Action: "update", Description: "Update PNR"},
+		{Name: "pnr.cancel", Resource: "pnr", Action: "cancel", Description: "Cancel PNR"},
 		// Seats
-		{Name: "seats.create", Resource: "seats", Action: "create", Description: "Create seats"},
-		{Name: "seats.read", Resource: "seats", Action: "read", Description: "View seats"},
-		{Name: "seats.update", Resource: "seats", Action: "update", Description: "Update seats"},
-		// Bookings
-		{Name: "bookings.create", Resource: "bookings", Action: "create", Description: "Create bookings"},
-		{Name: "bookings.read", Resource: "bookings", Action: "read", Description: "View all bookings"},
-		{Name: "bookings.read_own", Resource: "bookings", Action: "read_own", Description: "View own bookings"},
-		{Name: "bookings.update", Resource: "bookings", Action: "update", Description: "Update bookings"},
-		{Name: "bookings.delete", Resource: "bookings", Action: "delete", Description: "Cancel/delete bookings"},
-		// Passengers
-		{Name: "passengers.create", Resource: "passengers", Action: "create", Description: "Register passengers"},
-		{Name: "passengers.read", Resource: "passengers", Action: "read", Description: "View all passengers"},
-		{Name: "passengers.update", Resource: "passengers", Action: "update", Description: "Update passenger data"},
-		{Name: "passengers.delete", Resource: "passengers", Action: "delete", Description: "Delete passengers"},
+		{Name: "seats.read", Resource: "seats", Action: "read", Description: "View seat map"},
+		{Name: "seats.assign", Resource: "seats", Action: "assign", Description: "Assign seats"},
+		{Name: "seats.manage", Resource: "seats", Action: "manage", Description: "Manage seat inventory"},
+		// Check-in
+		{Name: "checkin.perform", Resource: "checkin", Action: "perform", Description: "Perform check-in"},
+		{Name: "checkin.read", Resource: "checkin", Action: "read", Description: "View check-in records"},
+		// Boarding
+		{Name: "boarding.read", Resource: "boarding", Action: "read", Description: "View boarding passes"},
+		{Name: "boarding.issue", Resource: "boarding", Action: "issue", Description: "Issue boarding passes"},
 		// Payments
 		{Name: "payments.create", Resource: "payments", Action: "create", Description: "Create payments"},
 		{Name: "payments.read", Resource: "payments", Action: "read", Description: "View all payments"},
 		{Name: "payments.read_own", Resource: "payments", Action: "read_own", Description: "View own payments"},
-		{Name: "payments.update", Resource: "payments", Action: "update", Description: "Update payment status"},
+		{Name: "payments.refund", Resource: "payments", Action: "refund", Description: "Process refunds"},
 		// Dashboard
 		{Name: "dashboard.read", Resource: "dashboard", Action: "read", Description: "View dashboard"},
-		{Name: "reports.read", Resource: "reports", Action: "read", Description: "View reports & analytics"},
+		{Name: "reports.read", Resource: "reports", Action: "read", Description: "View reports"},
 	}
 
 	for _, p := range permissions {
@@ -117,8 +116,6 @@ func seedPermissions() error {
 				return fmt.Errorf("create permission %s: %w", p.Name, err)
 			}
 			log.Printf("  Created permission: %s", p.Name)
-		} else {
-			log.Printf("  Permission already exists: %s", p.Name)
 		}
 	}
 	return nil
@@ -133,56 +130,53 @@ func seedRoles() error {
 		"super_admin": {
 			"users.create", "users.read", "users.update", "users.delete",
 			"roles.create", "roles.read", "roles.update", "roles.delete",
-			"permissions.read",
-			"profile.read", "profile.update",
+			"permissions.read", "profile.read", "profile.update",
 			"airports.create", "airports.read", "airports.update", "airports.delete",
 			"aircrafts.create", "aircrafts.read", "aircrafts.update", "aircrafts.delete",
 			"flights.create", "flights.read", "flights.update", "flights.delete",
-			"seats.create", "seats.read", "seats.update",
-			"bookings.create", "bookings.read", "bookings.update", "bookings.delete",
-			"passengers.create", "passengers.read", "passengers.update", "passengers.delete",
-			"payments.create", "payments.read", "payments.update",
+			"pnr.create", "pnr.read", "pnr.update", "pnr.cancel",
+			"seats.read", "seats.assign", "seats.manage",
+			"checkin.perform", "checkin.read",
+			"boarding.read", "boarding.issue",
+			"payments.create", "payments.read", "payments.refund",
 			"dashboard.read", "reports.read",
 		},
 		"admin": {
 			"users.read", "users.update",
 			"roles.read", "permissions.read",
 			"profile.read", "profile.update",
-			"airports.read",
-			"aircrafts.read",
+			"airports.read", "aircrafts.read",
 			"flights.create", "flights.read", "flights.update",
-			"seats.read", "seats.update",
-			"bookings.read", "bookings.update",
-			"passengers.read", "passengers.update",
-			"payments.read", "payments.update",
+			"pnr.read", "pnr.update", "pnr.cancel",
+			"seats.read", "seats.assign", "seats.manage",
+			"checkin.perform", "checkin.read",
+			"boarding.read", "boarding.issue",
+			"payments.read", "payments.refund",
 			"dashboard.read", "reports.read",
 		},
 		"agent": {
 			"profile.read", "profile.update",
-			"airports.read",
-			"aircrafts.read",
-			"flights.read",
-			"seats.read",
-			"bookings.create", "bookings.read", "bookings.update",
-			"passengers.create", "passengers.read", "passengers.update",
+			"airports.read", "aircrafts.read", "flights.read",
+			"pnr.create", "pnr.read", "pnr.update", "pnr.cancel",
+			"seats.read", "seats.assign",
+			"checkin.perform", "checkin.read",
+			"boarding.read", "boarding.issue",
 			"payments.create", "payments.read",
 		},
 		"customer": {
 			"profile.read", "profile.update",
-			"airports.read",
-			"flights.read",
-			"seats.read",
-			"bookings.create", "bookings.read_own",
-			"passengers.create",
+			"airports.read", "flights.read",
+			"pnr.create", "pnr.read_own", "pnr.cancel",
+			"seats.read", "seats.assign",
 			"payments.create", "payments.read_own",
 		},
 	}
 
 	roles := []models.Role{
-		{Name: "super_admin", Description: "Full system access with all permissions", Level: 4, IsSystemRole: true},
-		{Name: "admin", Description: "Administrative access to manage flights and bookings", Level: 3, IsSystemRole: true},
-		{Name: "agent", Description: "Booking agent with operational access", Level: 2, IsSystemRole: true},
-		{Name: "customer", Description: "Passenger access to search and book flights", Level: 1, IsSystemRole: true},
+		{Name: "super_admin", Description: "Full system access", Level: 4, IsSystemRole: true},
+		{Name: "admin", Description: "Administrative access", Level: 3, IsSystemRole: true},
+		{Name: "agent", Description: "Booking and check-in agent", Level: 2, IsSystemRole: true},
+		{Name: "customer", Description: "Passenger self-service access", Level: 1, IsSystemRole: true},
 	}
 
 	for _, role := range roles {
@@ -191,125 +185,14 @@ func seedRoles() error {
 			if err := DB.Create(&role).Error; err != nil {
 				return fmt.Errorf("create role %s: %w", role.Name, err)
 			}
-
 			var perms []*models.Permission
 			if err := DB.Where("name IN ?", rolePermissions[role.Name]).Find(&perms).Error; err != nil {
-				return fmt.Errorf("fetch permissions for role %s: %w", role.Name, err)
+				return fmt.Errorf("fetch permissions for %s: %w", role.Name, err)
 			}
 			if err := DB.Model(&role).Association("Permissions").Replace(perms); err != nil {
-				return fmt.Errorf("assign permissions to role %s: %w", role.Name, err)
+				return fmt.Errorf("assign permissions to %s: %w", role.Name, err)
 			}
-
-			log.Printf("  Created role: %s (level=%d) with %d permissions", role.Name, role.Level, len(perms))
-		} else {
-			log.Printf("  Role already exists: %s", role.Name)
-		}
-	}
-	return nil
-}
-
-// ─────────────────────────────────────────────
-// Airports
-// ─────────────────────────────────────────────
-
-func seedAirports() error {
-	airports := []models.Airport{
-		{Code: "CGK", Name: "Soekarno-Hatta International Airport", City: "Tangerang", Country: "Indonesia"},
-		{Code: "DPS", Name: "Ngurah Rai International Airport", City: "Denpasar", Country: "Indonesia"},
-		{Code: "SUB", Name: "Juanda International Airport", City: "Surabaya", Country: "Indonesia"},
-		{Code: "UPG", Name: "Sultan Hasanuddin International Airport", City: "Makassar", Country: "Indonesia"},
-		{Code: "KNO", Name: "Kualanamu International Airport", City: "Medan", Country: "Indonesia"},
-		{Code: "BPN", Name: "Sultan Aji Muhammad Sulaiman Airport", City: "Balikpapan", Country: "Indonesia"},
-		{Code: "LOP", Name: "Lombok International Airport", City: "Lombok", Country: "Indonesia"},
-		{Code: "SIN", Name: "Changi Airport", City: "Singapore", Country: "Singapore"},
-		{Code: "KUL", Name: "Kuala Lumpur International Airport", City: "Kuala Lumpur", Country: "Malaysia"},
-		{Code: "BKK", Name: "Suvarnabhumi Airport", City: "Bangkok", Country: "Thailand"},
-	}
-
-	for _, airport := range airports {
-		var existing models.Airport
-		if err := DB.Where("code = ?", airport.Code).First(&existing).Error; err != nil {
-			if err := DB.Create(&airport).Error; err != nil {
-				return fmt.Errorf("create airport %s: %w", airport.Code, err)
-			}
-			log.Printf("  Created airport: %s (%s)", airport.Name, airport.Code)
-		} else {
-			log.Printf("  Airport already exists: %s", airport.Code)
-		}
-	}
-	return nil
-}
-
-// ─────────────────────────────────────────────
-// Aircrafts + Seats
-// ─────────────────────────────────────────────
-
-type aircraftSeed struct {
-	model          string
-	registration   string
-	economyRows    int
-	businessRows   int
-	firstClassRows int
-}
-
-func seedAircrafts() error {
-	aircrafts := []aircraftSeed{
-		{model: "Boeing 737-800", registration: "PK-GFX", economyRows: 26, businessRows: 4, firstClassRows: 0},
-		{model: "Airbus A320", registration: "PK-LAX", economyRows: 24, businessRows: 4, firstClassRows: 0},
-		{model: "Boeing 777-300ER", registration: "PK-GII", economyRows: 38, businessRows: 8, firstClassRows: 2},
-		{model: "Airbus A330-300", registration: "PK-GPH", economyRows: 35, businessRows: 6, firstClassRows: 2},
-	}
-
-	for _, seed := range aircrafts {
-		var existing models.Aircraft
-		if err := DB.Where("registration_no = ?", seed.registration).First(&existing).Error; err != nil {
-			econSeats := seed.economyRows * 6
-			bizSeats := seed.businessRows * 4
-			firstSeats := seed.firstClassRows * 2
-			total := int64(econSeats + bizSeats + firstSeats)
-
-			aircraft := models.Aircraft{
-				Model:          seed.model,
-				RegistrationNo: seed.registration,
-				TotalSeats:     total,
-			}
-			if err := DB.Create(&aircraft).Error; err != nil {
-				return fmt.Errorf("create aircraft %s: %w", seed.registration, err)
-			}
-
-			// First Class
-			for row := 1; row <= seed.firstClassRows; row++ {
-				for _, col := range []string{"A", "B"} {
-					seat := models.Seat{AircraftID: aircraft.ID, SeatNumber: fmt.Sprintf("%d%s", row, col), SeatClass: models.SeatFirst}
-					if err := DB.Create(&seat).Error; err != nil {
-						return fmt.Errorf("create first class seat: %w", err)
-					}
-				}
-			}
-			// Business
-			bizStart := seed.firstClassRows + 1
-			for row := bizStart; row < bizStart+seed.businessRows; row++ {
-				for _, col := range []string{"A", "B", "C", "D"} {
-					seat := models.Seat{AircraftID: aircraft.ID, SeatNumber: fmt.Sprintf("%d%s", row, col), SeatClass: models.SeatBusiness}
-					if err := DB.Create(&seat).Error; err != nil {
-						return fmt.Errorf("create business seat: %w", err)
-					}
-				}
-			}
-			// Economy
-			econStart := seed.firstClassRows + seed.businessRows + 1
-			for row := econStart; row < econStart+seed.economyRows; row++ {
-				for _, col := range []string{"A", "B", "C", "D", "E", "F"} {
-					seat := models.Seat{AircraftID: aircraft.ID, SeatNumber: fmt.Sprintf("%d%s", row, col), SeatClass: models.SeatEconomy}
-					if err := DB.Create(&seat).Error; err != nil {
-						return fmt.Errorf("create economy seat: %w", err)
-					}
-				}
-			}
-
-			log.Printf("  Created aircraft: %s (%s) with %d seats", aircraft.Model, aircraft.RegistrationNo, total)
-		} else {
-			log.Printf("  Aircraft already exists: %s", seed.registration)
+			log.Printf("  Created role: %s (level=%d, permissions=%d)", role.Name, role.Level, len(perms))
 		}
 	}
 	return nil
@@ -320,7 +203,6 @@ func seedAircrafts() error {
 // ─────────────────────────────────────────────
 
 func seedUsers() error {
-	// Build role name → ID map
 	roleMap := map[string]uint{}
 	var roles []models.Role
 	if err := DB.Find(&roles).Error; err != nil {
@@ -336,13 +218,12 @@ func seedUsers() error {
 		password string
 		roleName string
 	}{
-		{"superadmin@flightapp.com", "System Administrator", "SuperAdmin@123", "super_admin"},
-		{"admin@flightapp.com", "Flight Admin", "Admin@12345", "admin"},
-		{"agent@flightapp.com", "Booking Agent", "Agent@12345", "agent"},
+		{"superadmin@airline.com", "System Administrator", "SuperAdmin@123", "super_admin"},
+		{"admin@airline.com", "Operations Admin", "Admin@12345", "admin"},
+		{"agent@airline.com", "Booking Agent", "Agent@12345", "agent"},
 		{"budi.santoso@gmail.com", "Budi Santoso", "Password123", "customer"},
 		{"siti.rahayu@gmail.com", "Siti Rahayu", "Password123", "customer"},
 		{"agus.wijaya@gmail.com", "Agus Wijaya", "Password123", "customer"},
-		{"dewi.lestari@gmail.com", "Dewi Lestari", "Password123", "customer"},
 	}
 
 	for _, u := range users {
@@ -354,7 +235,7 @@ func seedUsers() error {
 			}
 			hash, err := bcrypt.GenerateFromPassword([]byte(u.password), bcrypt.DefaultCost)
 			if err != nil {
-				return fmt.Errorf("hash password for %s: %w", u.email, err)
+				return fmt.Errorf("hash password: %w", err)
 			}
 			user := models.User{
 				Email:        u.email,
@@ -365,36 +246,315 @@ func seedUsers() error {
 			if err := DB.Create(&user).Error; err != nil {
 				return fmt.Errorf("create user %s: %w", u.email, err)
 			}
-			log.Printf("  Created user: %s (role=%s)", u.fullName, u.roleName)
-		} else {
-			log.Printf("  User already exists: %s", u.email)
+			log.Printf("  Created user: %s (%s)", u.fullName, u.roleName)
 		}
 	}
 	return nil
 }
 
 // ─────────────────────────────────────────────
-// Passengers
+// SeatClasses
 // ─────────────────────────────────────────────
 
-func seedPassengers() error {
-	passengers := []models.Passenger{
-		{FirstName: "Budi", LastName: "Santoso", DateOfBirth: mustParseDate("1990-05-15"), PassportNumber: "A12345678"},
-		{FirstName: "Siti", LastName: "Rahayu", DateOfBirth: mustParseDate("1992-08-22"), PassportNumber: "B87654321"},
-		{FirstName: "Agus", LastName: "Wijaya", DateOfBirth: mustParseDate("1988-03-10"), PassportNumber: "C11223344"},
-		{FirstName: "Dewi", LastName: "Lestari", DateOfBirth: mustParseDate("1995-11-30"), PassportNumber: "D44332211"},
-		{FirstName: "Rudi", LastName: "Hermawan", DateOfBirth: mustParseDate("1985-07-04"), PassportNumber: "E55667788"},
+func seedSeatClasses() error {
+	classes := []models.SeatClass{
+		{Code: "F", Name: "First Class"},
+		{Code: "C", Name: "Business Class"},
+		{Code: "Y", Name: "Economy Class"},
+	}
+	for _, sc := range classes {
+		var existing models.SeatClass
+		if err := DB.Where("code = ?", sc.Code).First(&existing).Error; err != nil {
+			if err := DB.Create(&sc).Error; err != nil {
+				return fmt.Errorf("create seat class %s: %w", sc.Code, err)
+			}
+			log.Printf("  Created seat class: %s (%s)", sc.Name, sc.Code)
+		}
+	}
+	return nil
+}
+
+// ─────────────────────────────────────────────
+// SSR Types
+// ─────────────────────────────────────────────
+
+func seedSSRTypes() error {
+	ssrTypes := []models.SSRType{
+		{Code: "WCHR", Name: "Wheelchair - Ramp"},
+		{Code: "WCHS", Name: "Wheelchair - Steps"},
+		{Code: "WCHC", Name: "Wheelchair - Cabin Seat"},
+		{Code: "BLND", Name: "Blind Passenger"},
+		{Code: "DEAF", Name: "Deaf Passenger"},
+		{Code: "UMNR", Name: "Unaccompanied Minor"},
+		{Code: "VGML", Name: "Vegetarian Meal"},
+		{Code: "KSML", Name: "Kosher Meal"},
+		{Code: "MOML", Name: "Muslim Meal"},
+		{Code: "PETC", Name: "Pet in Cabin"},
+	}
+	for _, s := range ssrTypes {
+		var existing models.SSRType
+		if err := DB.Where("code = ?", s.Code).First(&existing).Error; err != nil {
+			if err := DB.Create(&s).Error; err != nil {
+				return fmt.Errorf("create SSR type %s: %w", s.Code, err)
+			}
+			log.Printf("  Created SSR type: %s", s.Code)
+		}
+	}
+	return nil
+}
+
+// ─────────────────────────────────────────────
+// Meals
+// ─────────────────────────────────────────────
+
+func seedMeals() error {
+	meals := []models.Meal{
+		{Code: "BBML", Name: "Baby Meal"},
+		{Code: "BLML", Name: "Bland Meal"},
+		{Code: "CHML", Name: "Child Meal"},
+		{Code: "DBML", Name: "Diabetic Meal"},
+		{Code: "FPML", Name: "Fruit Platter"},
+		{Code: "GFML", Name: "Gluten-Free Meal"},
+		{Code: "HNML", Name: "Hindu Meal"},
+		{Code: "KSML", Name: "Kosher Meal"},
+		{Code: "LCML", Name: "Low Calorie Meal"},
+		{Code: "MOML", Name: "Muslim Meal"},
+		{Code: "NLML", Name: "Low Lactose Meal"},
+		{Code: "RVML", Name: "Raw Vegetarian Meal"},
+		{Code: "SFML", Name: "Seafood Meal"},
+		{Code: "VGML", Name: "Vegan Meal"},
+		{Code: "VJML", Name: "Vegetarian Jain Meal"},
+		{Code: "VLML", Name: "Vegetarian Lacto-Ovo Meal"},
+	}
+	for _, m := range meals {
+		var existing models.Meal
+		if err := DB.Where("code = ?", m.Code).First(&existing).Error; err != nil {
+			if err := DB.Create(&m).Error; err != nil {
+				return fmt.Errorf("create meal %s: %w", m.Code, err)
+			}
+			log.Printf("  Created meal: %s", m.Code)
+		}
+	}
+	return nil
+}
+
+// ─────────────────────────────────────────────
+// Airports
+// ─────────────────────────────────────────────
+
+func seedAirports() error {
+	airports := []models.Airport{
+		{Code: "CGK", Name: "Soekarno-Hatta International Airport", City: "Tangerang", Country: "Indonesia", Timezone: "Asia/Jakarta"},
+		{Code: "DPS", Name: "Ngurah Rai International Airport", City: "Denpasar", Country: "Indonesia", Timezone: "Asia/Makassar"},
+		{Code: "SUB", Name: "Juanda International Airport", City: "Surabaya", Country: "Indonesia", Timezone: "Asia/Jakarta"},
+		{Code: "UPG", Name: "Sultan Hasanuddin International Airport", City: "Makassar", Country: "Indonesia", Timezone: "Asia/Makassar"},
+		{Code: "KNO", Name: "Kualanamu International Airport", City: "Medan", Country: "Indonesia", Timezone: "Asia/Jakarta"},
+		{Code: "BPN", Name: "Sultan Aji Muhammad Sulaiman Airport", City: "Balikpapan", Country: "Indonesia", Timezone: "Asia/Makassar"},
+		{Code: "LOP", Name: "Lombok International Airport", City: "Lombok", Country: "Indonesia", Timezone: "Asia/Makassar"},
+		{Code: "PLM", Name: "Sultan Mahmud Badaruddin II Airport", City: "Palembang", Country: "Indonesia", Timezone: "Asia/Jakarta"},
+		{Code: "SIN", Name: "Changi Airport", City: "Singapore", Country: "Singapore", Timezone: "Asia/Singapore"},
+		{Code: "KUL", Name: "Kuala Lumpur International Airport", City: "Kuala Lumpur", Country: "Malaysia", Timezone: "Asia/Kuala_Lumpur"},
+	}
+	for _, a := range airports {
+		var existing models.Airport
+		if err := DB.Where("code = ?", a.Code).First(&existing).Error; err != nil {
+			if err := DB.Create(&a).Error; err != nil {
+				return fmt.Errorf("create airport %s: %w", a.Code, err)
+			}
+			log.Printf("  Created airport: %s (%s)", a.Name, a.Code)
+		}
+	}
+	return nil
+}
+
+// ─────────────────────────────────────────────
+// Aircrafts + AircraftSeats
+// ─────────────────────────────────────────────
+
+type acSeed struct {
+	model        string
+	manufacturer string
+	firstRows    int // cols A-B
+	bizRows      int // cols A-D
+	econRows     int // cols A-F
+}
+
+func seedAircrafts() error {
+	// Fetch seat class IDs
+	classMap := map[string]models.SeatClass{}
+	var classes []models.SeatClass
+	DB.Find(&classes)
+	for _, c := range classes {
+		classMap[c.Code] = c
 	}
 
-	for _, p := range passengers {
-		var existing models.Passenger
-		if err := DB.Where("passport_number = ?", p.PassportNumber).First(&existing).Error; err != nil {
-			if err := DB.Create(&p).Error; err != nil {
-				return fmt.Errorf("create passenger %s %s: %w", p.FirstName, p.LastName, err)
+	seeds := []acSeed{
+		{model: "737-800", manufacturer: "Boeing", firstRows: 0, bizRows: 4, econRows: 26},
+		{model: "A320", manufacturer: "Airbus", firstRows: 0, bizRows: 4, econRows: 24},
+		{model: "777-300ER", manufacturer: "Boeing", firstRows: 2, bizRows: 8, econRows: 38},
+		{model: "A330-300", manufacturer: "Airbus", firstRows: 2, bizRows: 6, econRows: 35},
+	}
+
+	for _, seed := range seeds {
+		var existing models.Aircraft
+		if err := DB.Where("model = ? AND manufacturer = ?", seed.model, seed.manufacturer).First(&existing).Error; err != nil {
+			first := seed.firstRows * 2
+			biz := seed.bizRows * 4
+			econ := seed.econRows * 6
+			total := first + biz + econ
+
+			aircraft := models.Aircraft{
+				Model:        seed.model,
+				Manufacturer: seed.manufacturer,
+				TotalSeats:   total,
 			}
-			log.Printf("  Created passenger: %s %s", p.FirstName, p.LastName)
-		} else {
-			log.Printf("  Passenger already exists: %s", p.PassportNumber)
+			if err := DB.Create(&aircraft).Error; err != nil {
+				return fmt.Errorf("create aircraft %s: %w", seed.model, err)
+			}
+
+			row := 1
+			// First class
+			if fc, ok := classMap["F"]; ok {
+				classID := fc.ID
+				for r := 0; r < seed.firstRows; r++ {
+					for _, letter := range []string{"A", "B"} {
+						y := (r * 2) + map[string]int{"A": 0, "B": 1}[letter]
+						seat := models.AircraftSeat{
+							AircraftID:  aircraft.ID,
+							SeatNumber:  fmt.Sprintf("%d%s", row, letter),
+							RowNumber:   row,
+							SeatLetter:  letter,
+							XPosition:   row,
+							YPosition:   y,
+							SeatClassID: &classID,
+							SeatType:    "window",
+						}
+						if letter == "B" {
+							seat.SeatType = "aisle"
+						}
+						if err := DB.Create(&seat).Error; err != nil {
+							return fmt.Errorf("create first seat: %w", err)
+						}
+					}
+					row++
+				}
+			}
+			// Business class
+			if bc, ok := classMap["C"]; ok {
+				classID := bc.ID
+				bizLetters := []string{"A", "B", "C", "D"}
+				for r := 0; r < seed.bizRows; r++ {
+					for i, letter := range bizLetters {
+						seatType := "middle"
+						if letter == "A" || letter == "D" {
+							seatType = "window"
+						} else if letter == "B" || letter == "C" {
+							seatType = "aisle"
+						}
+						seat := models.AircraftSeat{
+							AircraftID:  aircraft.ID,
+							SeatNumber:  fmt.Sprintf("%d%s", row, letter),
+							RowNumber:   row,
+							SeatLetter:  letter,
+							XPosition:   row,
+							YPosition:   i,
+							SeatClassID: &classID,
+							SeatType:    seatType,
+						}
+						if err := DB.Create(&seat).Error; err != nil {
+							return fmt.Errorf("create business seat: %w", err)
+						}
+					}
+					row++
+				}
+			}
+			// Economy class
+			if ec, ok := classMap["Y"]; ok {
+				classID := ec.ID
+				econLetters := []string{"A", "B", "C", "D", "E", "F"}
+				for r := 0; r < seed.econRows; r++ {
+					isExit := (r == seed.econRows/2)
+					for i, letter := range econLetters {
+						seatType := "middle"
+						if letter == "A" || letter == "F" {
+							seatType = "window"
+						} else if letter == "C" || letter == "D" {
+							seatType = "aisle"
+						}
+						seat := models.AircraftSeat{
+							AircraftID:  aircraft.ID,
+							SeatNumber:  fmt.Sprintf("%d%s", row, letter),
+							RowNumber:   row,
+							SeatLetter:  letter,
+							XPosition:   row,
+							YPosition:   i,
+							SeatClassID: &classID,
+							SeatType:    seatType,
+							IsExitRow:   isExit,
+						}
+						if err := DB.Create(&seat).Error; err != nil {
+							return fmt.Errorf("create economy seat: %w", err)
+						}
+					}
+					row++
+				}
+			}
+			log.Printf("  Created aircraft: %s %s (%d seats)", seed.manufacturer, seed.model, total)
+		}
+	}
+	return nil
+}
+
+// ─────────────────────────────────────────────
+// FlightSchedules
+// ─────────────────────────────────────────────
+
+func seedFlightSchedules() error {
+	apMap := map[string]models.Airport{}
+	var airports []models.Airport
+	DB.Find(&airports)
+	for _, a := range airports {
+		apMap[a.Code] = a
+	}
+
+	type scheduleSeed struct {
+		flightNo string
+		dep, arr string
+		depTime  string
+		arrTime  string
+		days     string
+	}
+
+	schedules := []scheduleSeed{
+		{"GA-401", "CGK", "DPS", "06:00:00", "07:55:00", "1,2,3,4,5,6,7"},
+		{"GA-402", "DPS", "CGK", "09:00:00", "10:55:00", "1,2,3,4,5,6,7"},
+		{"GA-101", "CGK", "SUB", "07:00:00", "08:20:00", "1,2,3,4,5,6,7"},
+		{"GA-102", "SUB", "CGK", "10:00:00", "11:20:00", "1,2,3,4,5,6,7"},
+		{"GA-601", "CGK", "UPG", "08:00:00", "11:00:00", "1,2,3,4,5"},
+		{"GA-201", "CGK", "KNO", "06:30:00", "10:00:00", "1,2,3,4,5,6,7"},
+		{"GA-701", "CGK", "SIN", "09:00:00", "12:10:00", "1,2,3,4,5,6,7"},
+		{"GA-702", "SIN", "CGK", "14:00:00", "17:10:00", "1,2,3,4,5,6,7"},
+		{"GA-801", "CGK", "KUL", "10:00:00", "13:00:00", "1,2,3,4,5,6"},
+		{"GA-901", "DPS", "SIN", "12:00:00", "14:30:00", "1,3,5,7"},
+	}
+
+	for _, s := range schedules {
+		var existing models.FlightSchedule
+		if err := DB.Where("flight_number = ?", s.flightNo).First(&existing).Error; err != nil {
+			dep := apMap[s.dep]
+			arr := apMap[s.arr]
+			sched := models.FlightSchedule{
+				FlightNumber:       s.flightNo,
+				DepartureAirportID: dep.ID,
+				ArrivalAirportID:   arr.ID,
+				DepartureTime:      s.depTime,
+				ArrivalTime:        s.arrTime,
+				OperatingDays:      s.days,
+			}
+			if err := DB.Create(&sched).Error; err != nil {
+				return fmt.Errorf("create schedule %s: %w", s.flightNo, err)
+			}
+			log.Printf("  Created schedule: %s (%s → %s)", s.flightNo, s.dep, s.arr)
 		}
 	}
 	return nil
@@ -405,152 +565,207 @@ func seedPassengers() error {
 // ─────────────────────────────────────────────
 
 func seedFlights() error {
-	airports := map[string]models.Airport{}
-	for _, code := range []string{"CGK", "DPS", "SUB", "UPG", "KNO", "SIN", "KUL"} {
-		var ap models.Airport
-		if err := DB.Where("code = ?", code).First(&ap).Error; err != nil {
-			return fmt.Errorf("airport %s not found: %w", code, err)
-		}
-		airports[code] = ap
+	var schedules []models.FlightSchedule
+	if err := DB.Preload("DepartureAirport").Preload("ArrivalAirport").Find(&schedules).Error; err != nil {
+		return fmt.Errorf("fetch schedules: %w", err)
 	}
 
-	var aircraft []models.Aircraft
-	if err := DB.Find(&aircraft).Error; err != nil || len(aircraft) == 0 {
-		return fmt.Errorf("no aircraft found")
+	var aircrafts []models.Aircraft
+	DB.Find(&aircrafts)
+	if len(aircrafts) == 0 {
+		return fmt.Errorf("no aircrafts found")
 	}
 
 	now := time.Now()
-	flightDefs := []struct {
-		number    string
-		dep, arr  string
-		depOffset time.Duration
-		duration  time.Duration
-		basePrice float64
-		acIdx     int
-	}{
-		{"GA-401", "CGK", "DPS", 2, 2 * time.Hour, 850000, 0},
-		{"GA-402", "DPS", "CGK", 6, 2 * time.Hour, 850000, 0},
-		{"GA-101", "CGK", "SUB", 3, 80 * time.Minute, 650000, 1},
-		{"GA-102", "SUB", "CGK", 7, 80 * time.Minute, 650000, 1},
-		{"GA-601", "CGK", "UPG", 4, 3 * time.Hour, 1100000, 2},
-		{"GA-201", "CGK", "KNO", 5, 210 * time.Minute, 1250000, 2},
-		{"GA-701", "CGK", "SIN", 8, 130 * time.Minute, 2500000, 3},
-		{"GA-702", "SIN", "CGK", 14, 130 * time.Minute, 2500000, 3},
-		{"GA-801", "CGK", "KUL", 10, 2 * time.Hour, 1800000, 0},
-		{"GA-901", "DPS", "SIN", 12, 150 * time.Minute, 2200000, 1},
-	}
 
-	for _, fd := range flightDefs {
-		var existing models.Flight
-		if err := DB.Where("flight_number = ?", fd.number).First(&existing).Error; err != nil {
-			depTime := now.Add(fd.depOffset * time.Hour).Truncate(time.Minute)
-			arrTime := depTime.Add(fd.duration)
-			ac := aircraft[fd.acIdx%len(aircraft)]
+	for i, sched := range schedules {
+		ac := aircrafts[i%len(aircrafts)]
 
-			flight := models.Flight{
-				FlightNumber:       fd.number,
-				AircraftID:         ac.ID,
-				DepartureAirportID: airports[fd.dep].ID,
-				ArrivalAirportID:   airports[fd.arr].ID,
-				DepartureTime:      depTime,
-				ArrivalTime:        arrTime,
-				BasePrice:          fd.basePrice,
-				Status:             models.FlightScheduled,
-			}
-			if err := DB.Create(&flight).Error; err != nil {
-				return fmt.Errorf("create flight %s: %w", fd.number, err)
+		// Parse schedule time to build departure datetime
+		depHour, depMin := parseTime(sched.DepartureTime)
+		arrHour, arrMin := parseTime(sched.ArrivalTime)
+
+		for dayOffset := 0; dayOffset < 7; dayOffset++ {
+			date := now.AddDate(0, 0, dayOffset).Truncate(24 * time.Hour)
+			depTime := date.Add(time.Duration(depHour)*time.Hour + time.Duration(depMin)*time.Minute)
+			arrTime := date.Add(time.Duration(arrHour)*time.Hour + time.Duration(arrMin)*time.Minute)
+			if arrTime.Before(depTime) {
+				arrTime = arrTime.AddDate(0, 0, 1) // overnight flight
 			}
 
-			var seats []models.Seat
-			DB.Where("aircraft_id = ?", ac.ID).Find(&seats)
-
-			for _, seat := range seats {
-				price := fd.basePrice
-				switch seat.SeatClass {
-				case models.SeatBusiness:
-					price = fd.basePrice * 2.5
-				case models.SeatFirst:
-					price = fd.basePrice * 5.0
+			var existing models.Flight
+			schedID := sched.ID
+			acID := ac.ID
+			if err := DB.Where("schedule_id = ? AND departure_time = ?", schedID, depTime).First(&existing).Error; err != nil {
+				flight := models.Flight{
+					ScheduleID:    &schedID,
+					AircraftID:    &acID,
+					DepartureTime: &depTime,
+					ArrivalTime:   &arrTime,
+					Status:        models.FlightStatusScheduled,
 				}
-				fs := models.FlightSeat{FlightID: flight.ID, SeatID: seat.ID, Price: price, Status: true}
-				if err := DB.Create(&fs).Error; err != nil {
-					return fmt.Errorf("create flight seat: %w", err)
+				if err := DB.Create(&flight).Error; err != nil {
+					return fmt.Errorf("create flight for %s: %w", sched.FlightNumber, err)
+				}
+
+				// Create FlightSeats from aircraft seats
+				var acSeats []models.AircraftSeat
+				DB.Where("aircraft_id = ?", ac.ID).Preload("SeatClass").Find(&acSeats)
+
+				for _, acSeat := range acSeats {
+					basePrice := basePriceForClass(acSeat.SeatClass)
+					fs := models.FlightSeat{
+						FlightID:       &flight.ID,
+						AircraftSeatID: &acSeat.ID,
+						Price:          basePrice,
+						Status:         models.FlightSeatAvailable,
+					}
+					if err := DB.Create(&fs).Error; err != nil {
+						return fmt.Errorf("create flight seat: %w", err)
+					}
 				}
 			}
-			log.Printf("  Created flight: %s (%s → %s) with %d seats", fd.number, fd.dep, fd.arr, len(seats))
-		} else {
-			log.Printf("  Flight already exists: %s", fd.number)
 		}
+		log.Printf("  Created 7-day flights for schedule: %s", sched.FlightNumber)
 	}
 	return nil
 }
 
 // ─────────────────────────────────────────────
-// Bookings + Payments
+// Demo PNR (full booking flow)
 // ─────────────────────────────────────────────
 
-func seedBookings() error {
-	var customer models.User
-	if err := DB.Joins("Role").Where("roles.name = ?", "customer").First(&customer).Error; err != nil {
-		return fmt.Errorf("no customer user found: %w", err)
+func seedDemoPNR() error {
+	var existing models.PNR
+	if err := DB.Where("record_locator = ?", "DEMO01").First(&existing).Error; err == nil {
+		log.Println("  Demo PNR already exists")
+		return nil
+	}
+
+	// Pick first available flight with economy seats
+	var flightSeat models.FlightSeat
+	if err := DB.
+		Joins("JOIN aircraft_seats ON aircraft_seats.id = flight_seats.aircraft_seat_id").
+		Joins("JOIN seat_classes ON seat_classes.id = aircraft_seats.seat_class_id").
+		Where("flight_seats.status = ? AND seat_classes.code = ?", models.FlightSeatAvailable, "Y").
+		First(&flightSeat).Error; err != nil {
+		log.Println("  [SKIP] No available economy seat for demo PNR")
+		return nil
 	}
 
 	var flight models.Flight
-	if err := DB.Where("flight_number = ?", "GA-401").First(&flight).Error; err != nil {
-		return fmt.Errorf("flight GA-401 not found: %w", err)
+	DB.First(&flight, "id = ?", *flightSeat.FlightID)
+
+	// Create PNR
+	ttl := time.Now().Add(24 * time.Hour)
+	pnr := models.PNR{
+		RecordLocator: "DEMO01",
+		Status:        models.PNRStatusConfirmed,
+		TTL:           &ttl,
+	}
+	if err := DB.Create(&pnr).Error; err != nil {
+		return fmt.Errorf("create PNR: %w", err)
 	}
 
-	var flightSeat models.FlightSeat
-	if err := DB.
-		Joins(`JOIN "Seat" ON "Seat".id = "FlightSeat".seat_id`).
-		Where(`"FlightSeat".flight_id = ? AND "FlightSeat".status = true AND "Seat".seat_class = ?`, flight.ID, models.SeatEconomy).
-		First(&flightSeat).Error; err != nil {
-		return fmt.Errorf("no available economy seat for GA-401: %w", err)
+	// Contact
+	contact := models.PNRContact{
+		PNRID: &pnr.ID,
+		Name:  "Budi Santoso",
+		Email: "budi.santoso@gmail.com",
+		Phone: "+6281234567890",
+	}
+	if err := DB.Create(&contact).Error; err != nil {
+		return fmt.Errorf("create PNR contact: %w", err)
 	}
 
-	var passenger models.Passenger
-	if err := DB.Where("passport_number = ?", "A12345678").First(&passenger).Error; err != nil {
-		return fmt.Errorf("passenger not found: %w", err)
+	// Passenger
+	dob := mustParseDate("1990-05-15")
+	passenger := models.PNRPassenger{
+		PNRID:          &pnr.ID,
+		FirstName:      "Budi",
+		LastName:       "Santoso",
+		PassengerType:  models.PassengerADT,
+		BirthDate:      &dob,
+		PassportNumber: "A12345678",
+	}
+	if err := DB.Create(&passenger).Error; err != nil {
+		return fmt.Errorf("create PNR passenger: %w", err)
 	}
 
-	var existingBooking models.Booking
-	if err := DB.Where("booking_code = ?", "BK-SEED-001").First(&existingBooking).Error; err != nil {
-		booking := models.Booking{
-			UserID:      customer.UID,
-			FlightID:    flight.ID,
-			BookingCode: "BK-SEED-001",
-			TotalAmount: flightSeat.Price,
-			Status:      models.BookingConfirmed,
-		}
-		if err := DB.Create(&booking).Error; err != nil {
-			return fmt.Errorf("create booking: %w", err)
-		}
-
-		bp := models.BookingPassenger{
-			BookingID:    booking.ID,
-			PassengerID:  passenger.ID,
-			FlightSeatID: flightSeat.ID,
-		}
-		if err := DB.Create(&bp).Error; err != nil {
-			return fmt.Errorf("create booking passenger: %w", err)
-		}
-
-		DB.Model(&flightSeat).Update("status", false)
-
-		payment := models.Payment{
-			BookingID: booking.ID,
-			Amount:    booking.TotalAmount,
-			Status:    models.PaymentSuccess,
-			Method:    models.MethodBankTransfer,
-			PaidAt:    time.Now(),
-		}
-		if err := DB.Create(&payment).Error; err != nil {
-			return fmt.Errorf("create payment: %w", err)
-		}
-		log.Printf("  Created booking: %s (flight %s, passenger %s %s)", booking.BookingCode, flight.FlightNumber, passenger.FirstName, passenger.LastName)
-	} else {
-		log.Println("  Booking BK-SEED-001 already exists")
+	// Segment
+	flightID := *flightSeat.FlightID
+	segment := models.PNRSegment{
+		PNRID:        &pnr.ID,
+		FlightID:     &flightID,
+		SegmentOrder: 1,
 	}
+	if err := DB.Create(&segment).Error; err != nil {
+		return fmt.Errorf("create PNR segment: %w", err)
+	}
+
+	// Lock seat
+	now := time.Now()
+	expires := now.Add(15 * time.Minute)
+	seatLock := models.SeatLock{
+		FlightSeatID: &flightSeat.ID,
+		PNRID:        &pnr.ID,
+		LockedAt:     &now,
+		ExpiresAt:    &expires,
+	}
+	if err := DB.Create(&seatLock).Error; err != nil {
+		return fmt.Errorf("create seat lock: %w", err)
+	}
+
+	// Assign seat
+	assignedAt := time.Now()
+	assignment := models.SeatAssignment{
+		PassengerID:  &passenger.ID,
+		SegmentID:    &segment.ID,
+		FlightSeatID: &flightSeat.ID,
+		AssignedAt:   &assignedAt,
+	}
+	if err := DB.Create(&assignment).Error; err != nil {
+		return fmt.Errorf("create seat assignment: %w", err)
+	}
+
+	// Mark seat as booked
+	DB.Model(&flightSeat).Update("status", models.FlightSeatBooked)
+
+	// Payment
+	paidAt := time.Now()
+	payment := models.Payment{
+		PNRID:  &pnr.ID,
+		Amount: flightSeat.Price,
+		Method: models.PaymentMethodBankTransfer,
+		Status: models.PaymentStatusSuccess,
+		PaidAt: &paidAt,
+	}
+	if err := DB.Create(&payment).Error; err != nil {
+		return fmt.Errorf("create payment: %w", err)
+	}
+
+	// Ticket
+	issuedAt := time.Now()
+	ticketNum := fmt.Sprintf("GA-%010d", rand.Intn(9999999999))
+	ticket := models.Ticket{
+		PassengerID:  &passenger.ID,
+		TicketNumber: ticketNum,
+		IssuedAt:     &issuedAt,
+	}
+	if err := DB.Create(&ticket).Error; err != nil {
+		return fmt.Errorf("create ticket: %w", err)
+	}
+
+	// TicketSegment
+	ts := models.TicketSegment{TicketID: &ticket.ID, SegmentID: &segment.ID}
+	if err := DB.Create(&ts).Error; err != nil {
+		return fmt.Errorf("create ticket segment: %w", err)
+	}
+
+	// Update PNR status to ticketed
+	DB.Model(&pnr).Update("status", models.PNRStatusTicketed)
+
+	log.Printf("  Created demo PNR: DEMO01 (ticket: %s)", ticketNum)
 	return nil
 }
 
@@ -561,30 +776,49 @@ func seedBookings() error {
 func mustParseDate(s string) time.Time {
 	t, err := time.Parse("2006-01-02", s)
 	if err != nil {
-		panic(fmt.Sprintf("mustParseDate: invalid date %q: %v", s, err))
+		panic(fmt.Sprintf("mustParseDate %q: %v", s, err))
 	}
 	return t
 }
 
-// ForceSeedDatabase truncates all tables and re-runs seeder. Dev/staging only.
+// parseTime parses "HH:MM:SS" or "HH:MM" → hour, minute
+func parseTime(s string) (int, int) {
+	var h, m, sec int
+	fmt.Sscanf(s, "%d:%d:%d", &h, &m, &sec)
+	return h, m
+}
+
+func basePriceForClass(sc *models.SeatClass) float64 {
+	if sc == nil {
+		return 500000
+	}
+	switch sc.Code {
+	case "F":
+		return 5000000
+	case "C":
+		return 2500000
+	default:
+		return 850000
+	}
+}
+
+// ForceSeedDatabase truncates all tables and re-runs seeder. Dev only.
 func ForceSeedDatabase() error {
 	tables := []string{
-		`"payment"`,
-		`"Booking Passengger"`,
-		`"booking"`,
-		`"FlightSeat"`,
-		`"Flight"`,
-		`"Seat"`,
-		`"Aircraft"`,
-		`"Airport"`,
-		`"Passengger"`,
-		`"User"`,
-		`role_permissions`,
-		`roles`,
-		`permissions`,
+		"boarding_passes", "checkins", "baggage",
+		"passenger_meals", "passenger_ssr",
+		"ticket_segments", "tickets",
+		"seat_assignments", "seat_locks",
+		"pnr_segments", "pnr_passengers", "pnr_contacts",
+		"payments", "pnrs",
+		"flight_seats", "flights", "flight_schedules",
+		"aircraft_seats", "aircrafts",
+		"airports", "seat_classes",
+		"ssr_types", "meals",
+		"users", "role_permissions", "roles", "permissions",
 	}
 	for _, t := range tables {
-		if err := DB.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", t)).Error; err != nil {
+		if err := DB.Exec(fmt.Sprintf(`TRUNCATE TABLE "%s" CASCADE`, t)).Error; err != nil {
 			return fmt.Errorf("truncate %s: %w", t, err)
 		}
 	}

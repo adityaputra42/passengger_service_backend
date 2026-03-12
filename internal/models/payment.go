@@ -11,25 +11,25 @@ type PaymentStatus string
 type PaymentMethod string
 
 const (
-	PaymentPending  PaymentStatus = "pending"
-	PaymentSuccess  PaymentStatus = "success"
-	PaymentFailed   PaymentStatus = "failed"
-	PaymentRefunded PaymentStatus = "refunded"
-	MethodCreditCard   PaymentMethod = "credit_card"
-	MethodDebitCard    PaymentMethod = "debit_card"
-	MethodBankTransfer PaymentMethod = "bank_transfer"
-	MethodEWallet      PaymentMethod = "e_wallet"
+	PaymentStatusPending  PaymentStatus = "pending"
+	PaymentStatusSuccess  PaymentStatus = "success"
+	PaymentStatusFailed   PaymentStatus = "failed"
+	PaymentStatusRefunded PaymentStatus = "refunded"
+
+	PaymentMethodCreditCard   PaymentMethod = "credit_card"
+	PaymentMethodDebitCard    PaymentMethod = "debit_card"
+	PaymentMethodBankTransfer PaymentMethod = "bank_transfer"
+	PaymentMethodEWallet      PaymentMethod = "e_wallet"
 )
 
 type Payment struct {
-	ID        uuid.UUID     `gorm:"type:uuid;primaryKey;column:id" json:"id"`
-	BookingID uuid.UUID     `gorm:"type:uuid;not null;column:booking_id" json:"booking_id" validate:"required"`
-	Amount    float64       `gorm:"not null;column:amount" json:"amount" validate:"required,gt=0"`
-	Status    PaymentStatus `gorm:"type:varchar(255);not null;column:status" json:"status" validate:"required,oneof=pending success failed refunded"`
-	Method    PaymentMethod `gorm:"type:varchar(255);not null;column:method" json:"method" validate:"required,oneof=credit_card debit_card bank_transfer e_wallet"`
-	PaidAt    time.Time     `gorm:"column:paid_at" json:"paid_at"`
-
-	Booking Booking `gorm:"foreignKey:BookingID" json:"booking,omitempty"`
+	ID     uuid.UUID     `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
+	PNRID  *uuid.UUID    `gorm:"type:uuid;index"                                  json:"pnr_id"`
+	Amount float64       `gorm:"type:numeric(10,2)"                               json:"amount" validate:"min=0"`
+	Method PaymentMethod `gorm:"type:varchar(50)"                                 json:"method" validate:"oneof=credit_card debit_card bank_transfer e_wallet"`
+	Status PaymentStatus `gorm:"type:varchar(20)"                                 json:"status" validate:"oneof=pending success failed refunded"`
+	PaidAt *time.Time    `gorm:"type:timestamptz"                                 json:"paid_at"`
+	PNR    *PNR          `gorm:"foreignKey:PNRID"                                 json:"pnr,omitempty"`
 }
 
 func (p *Payment) BeforeCreate(tx *gorm.DB) error {
@@ -38,5 +38,3 @@ func (p *Payment) BeforeCreate(tx *gorm.DB) error {
 	}
 	return nil
 }
-
-func (Payment) TableName() string { return "payment" }

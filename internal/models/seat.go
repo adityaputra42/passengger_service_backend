@@ -9,13 +9,6 @@ import (
 // Seat
 // ─────────────────────────────────────────────
 
-type SeatClass string
-
-const (
-	SeatEconomy  SeatClass = "economy"
-	SeatBusiness SeatClass = "business"
-	SeatFirst    SeatClass = "first"
-)
 
 type Seat struct {
 	ID         uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
