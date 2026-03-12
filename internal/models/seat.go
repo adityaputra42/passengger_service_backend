@@ -5,10 +5,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// ─────────────────────────────────────────────
-// Seat
-// ─────────────────────────────────────────────
-
 
 type Seat struct {
 	ID         uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
@@ -16,7 +12,6 @@ type Seat struct {
 	SeatNumber string    `gorm:"type:varchar(255);not null;column:seat_number" json:"seat_number" validate:"required,max=10"`
 	SeatClass  SeatClass `gorm:"type:varchar(255);not null;column:seat_class" json:"seat_class" validate:"required,oneof=economy business first"`
 
-	// Relations
 	Aircraft    Aircraft     `gorm:"foreignKey:AircraftID" json:"aircraft,omitempty"`
 	FlightSeats []FlightSeat `gorm:"foreignKey:SeatID" json:"flight_seats,omitempty"`
 }

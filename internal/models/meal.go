@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
 type Meal struct {
 	ID   uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
 	Code string    `gorm:"type:varchar(10)"                                 json:"code" validate:"max=10"`

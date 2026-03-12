@@ -78,7 +78,6 @@ func (User) TableName() string {
 
 func (u *User) ToResponse() *UserResponse {
 	permissions := []string{}
-	// Ensure Role and Permissions are preloaded
 	if u.Role.Permissions != nil {
 		for _, p := range u.Role.Permissions {
 			permissions = append(permissions, p.Name)

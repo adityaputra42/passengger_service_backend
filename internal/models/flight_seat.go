@@ -5,9 +5,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// ─────────────────────────────────────────────
-// FlightSeat
-// ─────────────────────────────────────────────
 
 type FlightSeatStatus string
 
