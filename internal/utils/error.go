@@ -88,4 +88,13 @@ var (
 	ErrMealNotFound     = errors.New("pilihan meal tidak ditemukan")
 	ErrSSRNotFound      = errors.New("SSR penumpang tidak ditemukan")
 	ErrMealSSRNotFound  = errors.New("meal penumpang tidak ditemukan")
+
+	// Multi-segment / Trip validation
+	ErrInvalidSegmentCount      = errors.New("jumlah segment tidak sesuai trip_type")
+	ErrSegmentChronologyInvalid = errors.New("urutan waktu segment tidak valid")
+	ErrRoundTripAirportMismatch = errors.New("airport return tidak cocok dengan arrival outbound")
+	ErrSeatFlightMismatch       = errors.New("seat tidak milik penerbangan yang dipilih")
+	ErrDuplicatePassengerSeat   = errors.New("penumpang memilih kursi dua kali di segment yang sama")
+	ErrDuplicateSeatSelection   = errors.New("kursi yang sama dipilih dua penumpang berbeda")
+	ErrInvalidPassengerIndex    = errors.New("passenger_index tidak valid")
 )

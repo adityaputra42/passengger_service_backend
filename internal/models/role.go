@@ -19,22 +19,6 @@ type Role struct {
 	Permissions  []*Permission  `json:"permissions,omitempty" gorm:"many2many:role_permissions;"`
 }
 
-type RoleInput struct {
-	Name          string `json:"name" validate:"required,min=2,max=50"`
-	Description   string `json:"description" validate:"max=500"`
-	Level         int    `json:"level" validate:"required,min=1"`
-	IsSystemRole  bool   `json:"is_system_role"`
-	PermissionIDs []uint `json:"permission_ids"`
-}
-
-type RoleWithPermissions struct {
-	Role
-	PermissionIDs []uint `json:"permission_ids"`
-}
-
-type RolePermissionInput struct {
-	PermissionIDs []uint `json:"permission_ids" validate:"required,min=1"`
-}
 
 func (Role) TableName() string {
 	return "roles"

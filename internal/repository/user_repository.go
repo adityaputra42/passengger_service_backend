@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"math"
 	"passenger_service_backend/internal/db"
+	"passenger_service_backend/internal/dto"
 	"passenger_service_backend/internal/models"
 
 	"gorm.io/gorm"
@@ -15,18 +15,11 @@ type UserRepository interface {
 	FindById(id uint) (models.User, error)
 	FindByEmail(email string) (models.User, error)
 	FindByUsernameOrEmail(identifier string) (models.User, error)
-	FindAll(param models.UserListRequest) (*models.UserListResponse, error)
+	FindAll(param dto.UserListRequest) (*dto.UserListResponse, error)
 }
 
 type UserRepositoryImpl struct{}
 
-/*
-============================
-
-	FIND BY EMAIL
-
-============================
-*/
 func (u *UserRepositoryImpl) FindByEmail(email string) (models.User, error) {
 	user := models.User{}
 
@@ -61,13 +54,7 @@ func (u *UserRepositoryImpl) FindByUsernameOrEmail(identifier string) (models.Us
 	return user, err
 }
 
-/*
-============================
 
-	CREATE USER
-
-============================
-*/
 func (u *UserRepositoryImpl) Create(param models.User) (models.User, error) {
 	var result models.User
 
@@ -90,25 +77,11 @@ func (u *UserRepositoryImpl) Create(param models.User) (models.User, error) {
 	return result, err
 }
 
-/*
-============================
-
-	DELETE USER
-
-============================
-*/
 func (u *UserRepositoryImpl) Delete(param models.User) error {
 	return db.DB.Delete(&param).Error
 }
 
-/*
-============================
-
-	FIND ALL (PAGINATION)
-
-============================
-*/
-func (u *UserRepositoryImpl) FindAll(param models.UserListRequest) (*models.UserListResponse, error) {
+func (u *UserRepositoryImpl) FindAll(param dto.UserListRequest) (*dto.UserListResponse, error) {
 	offset := (param.Page - 1) * param.Limit
 
 	query := db.DB.
@@ -134,29 +107,11 @@ func (u *UserRepositoryImpl) FindAll(param models.UserListRequest) (*models.User
 		return nil, err
 	}
 
-	userResponses := make([]models.UserResponse, len(users))
-	for i, user := range users {
-		userResponses[i] = *user.ToResponse()
-	}
-
-	totalPages := int(math.Ceil(float64(total) / float64(param.Limit)))
-
-	return &models.UserListResponse{
-		Users:      userResponses,
-		Total:      total,
-		Page:       param.Page,
-		Limit:      param.Limit,
-		TotalPages: totalPages,
-	}, nil
+result :=  dto.ToUserListResponse(users,total,param.Page,param.Limit)
+	return result,nil;
 }
 
-/*
-============================
 
-	FIND BY ID
-
-============================
-*/
 func (u *UserRepositoryImpl) FindById(id uint) (models.User, error) {
 	var user models.User
 	err := db.DB.
