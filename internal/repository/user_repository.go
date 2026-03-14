@@ -5,6 +5,7 @@ import (
 	"passenger_service_backend/internal/dto"
 	"passenger_service_backend/internal/models"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -12,7 +13,7 @@ type UserRepository interface {
 	Create(param models.User) (models.User, error)
 	Update(param *models.User) (models.User, error)
 	Delete(param models.User) error
-	FindById(id uint) (models.User, error)
+	FindByUid(id uuid.UUID) (models.User, error)
 	FindByEmail(email string) (models.User, error)
 	FindByUsernameOrEmail(identifier string) (models.User, error)
 	FindAll(param dto.UserListRequest) (*dto.UserListResponse, error)
@@ -53,7 +54,6 @@ func (u *UserRepositoryImpl) FindByUsernameOrEmail(identifier string) (models.Us
 
 	return user, err
 }
-
 
 func (u *UserRepositoryImpl) Create(param models.User) (models.User, error) {
 	var result models.User
@@ -107,15 +107,14 @@ func (u *UserRepositoryImpl) FindAll(param dto.UserListRequest) (*dto.UserListRe
 		return nil, err
 	}
 
-result :=  dto.ToUserListResponse(users,total,param.Page,param.Limit)
-	return result,nil;
+	result := dto.ToUserListResponse(users, total, param.Page, param.Limit)
+	return result, nil
 }
 
-
-func (u *UserRepositoryImpl) FindById(id uint) (models.User, error) {
+func (u *UserRepositoryImpl) FindByUid(id uuid.UUID) (models.User, error) {
 	var user models.User
 	err := db.DB.
-		Select("id", "username", "email", "password_hash", "first_name", "last_name", "role_id", "is_active", "created_at", "updated_at").
+		Select("uid", "username", "email", "password_hash", "full_name", "role_id", "created_at", "updated_at").
 		Preload("Role", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
 		}).

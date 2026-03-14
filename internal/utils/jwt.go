@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type JWTClaims struct {
-	UserID uint   `json:"user_id"`
-	Email  string `json:"email"`
-	RoleID uint   `json:"role_id"`
-	Type   string `json:"type"` // "access" or "refresh"
+	UID    uuid.UUID `json:"uid"`
+	Email  string    `json:"email"`
+	RoleID uint      `json:"role_id"`
+	Type   string    `json:"type"` // "access" or "refresh"
 }
 
 type JWTService struct {
@@ -32,8 +33,6 @@ func (s *JWTService) GenerateAccessToken(user *models.User) (string, time.Time, 
 		return "", time.Time{}, errors.New("user cannot be nil")
 	}
 
-
-
 	expiresAt := time.Now().Add(s.config.JWT.AccessTokenExpiry)
 
 	claims := jwt.MapClaims{
@@ -44,7 +43,6 @@ func (s *JWTService) GenerateAccessToken(user *models.User) (string, time.Time, 
 		"exp":     expiresAt.Unix(),
 		"iat":     time.Now().Unix(),
 	}
-
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(s.config.JWT.Secret))
@@ -62,8 +60,6 @@ func (s *JWTService) GenerateRefreshToken(user *models.User) (string, time.Time,
 		log.Println("❌ JWT ERROR: user is nil")
 		return "", time.Time{}, errors.New("user cannot be nil")
 	}
-
-
 
 	expiresAt := time.Now().Add(s.config.JWT.RefreshTokenExpiry)
 
@@ -110,16 +106,10 @@ func (s *JWTService) ValidateAccessToken(tokenString string) (*JWTClaims, error)
 			return nil, errors.New("invalid token type")
 		}
 
-		userID, ok := claims["user_id"].(float64)
+		uid, ok := claims["uid"].(uuid.UUID)
 		if !ok {
 			log.Printf("❌ JWT ERROR: Invalid user_id claim, got: %v (type: %T)", claims["user_id"], claims["user_id"])
 			return nil, errors.New("invalid user_id claim")
-		}
-
-		// 🔍 DEBUG: Validasi user ID tidak 0
-		if uint(userID) == 0 {
-			log.Printf("❌ JWT ERROR: user_id is 0 in token claims")
-			return nil, errors.New("user_id cannot be zero")
 		}
 
 		email, ok := claims["email"].(string)
@@ -135,15 +125,15 @@ func (s *JWTService) ValidateAccessToken(tokenString string) (*JWTClaims, error)
 		}
 
 		jwtClaims := &JWTClaims{
-			UserID: uint(userID),
+			UID:    uid,
 			Email:  email,
 			RoleID: uint(roleID),
 			Type:   tokenType,
 		}
 
 		// 🔍 DEBUG: Log parsed claims
-		log.Printf("✅ Token Validated - UserID: %d, Email: %s, RoleID: %d",
-			jwtClaims.UserID, jwtClaims.Email, jwtClaims.RoleID)
+		log.Printf("✅ Token Validated - uid: %d, Email: %s, RoleID: %d",
+			jwtClaims.UID, jwtClaims.Email, jwtClaims.RoleID)
 
 		return jwtClaims, nil
 	}
@@ -172,16 +162,10 @@ func (s *JWTService) ValidateRefreshToken(tokenString string) (*JWTClaims, error
 			return nil, errors.New("invalid token type")
 		}
 
-		userID, ok := claims["user_id"].(float64)
+		uid, ok := claims["uid"].(uuid.UUID)
 		if !ok {
 			log.Printf("❌ JWT ERROR: Invalid user_id in refresh token, got: %v", claims["user_id"])
 			return nil, errors.New("invalid user_id claim")
-		}
-
-		// 🔍 DEBUG: Validasi user ID tidak 0
-		if uint(userID) == 0 {
-			log.Printf("❌ JWT ERROR: user_id is 0 in refresh token claims")
-			return nil, errors.New("user_id cannot be zero")
 		}
 
 		email, ok := claims["email"].(string)
@@ -195,15 +179,15 @@ func (s *JWTService) ValidateRefreshToken(tokenString string) (*JWTClaims, error
 		}
 
 		jwtClaims := &JWTClaims{
-			UserID: uint(userID),
+			UID:    uid,
 			Email:  email,
 			RoleID: uint(roleID),
 			Type:   tokenType,
 		}
 
 		// 🔍 DEBUG: Log parsed refresh token claims
-		log.Printf("✅ Refresh Token Validated - UserID: %d, Email: %s",
-			jwtClaims.UserID, jwtClaims.Email)
+		log.Printf("✅ Refresh Token Validated - UID: %d, Email: %s",
+			jwtClaims.UID, jwtClaims.Email)
 
 		return jwtClaims, nil
 	}
