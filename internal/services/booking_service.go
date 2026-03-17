@@ -302,15 +302,12 @@ func (s *bookingService) validateSegmentChronology(flights []*models.Flight) err
 	return nil
 }
 
-// validateRoundTrip memastikan departure airport segment ke-2
-// sama dengan arrival airport segment ke-1.
-func (s *bookingService) validateRoundTrip(ctx context.Context, flights []*models.Flight) error {
+func (s *bookingService) validateRoundTrip(_ context.Context, flights []*models.Flight) error {
 	outbound := flights[0]
 	ret := flights[1]
 
-	// Ambil schedule untuk mendapat airport info
 	if outbound.Schedule == nil || ret.Schedule == nil {
-		return nil // tidak bisa validasi tanpa schedule, lanjut
+		return nil
 	}
 	if outbound.Schedule.ArrivalAirportID != ret.Schedule.DepartureAirportID {
 		return fmt.Errorf(
@@ -338,15 +335,12 @@ func (s *bookingService) validateAndLoadSeats(
 			continue
 		}
 
-		// Cek duplikat passenger_index dalam segment ini
 		seenPax := map[int]bool{}
-		// Cek duplikat flight_seat_id dalam segment ini
 		seenSeat := map[uuid.UUID]bool{}
 
 		seatMap[segIdx] = make(map[int]*models.FlightSeat)
 
 		for _, sel := range seg.SeatSelections {
-			// Validasi passenger_index dalam range
 			if sel.PassengerIndex < 0 || sel.PassengerIndex >= len(req.Passengers) {
 				return nil, fmt.Errorf(
 					"%w: segment %d passenger_index %d tidak valid (total penumpang: %d)",
@@ -370,13 +364,11 @@ func (s *bookingService) validateAndLoadSeats(
 				)
 			}
 
-			// Load seat dengan detail
 			seat, err := s.flightSeatRepo.FindWithSeatDetail(ctx, sel.FlightSeatID)
 			if err != nil {
 				return nil, fmt.Errorf("segment %d: %w (seat_id: %s)", segIdx+1, utils.ErrFlightSeatNotFound, sel.FlightSeatID)
 			}
 
-			// Validasi seat milik flight ini
 			if seat.FlightID == nil || *seat.FlightID != seg.FlightID {
 				return nil, fmt.Errorf(
 					"%w: segment %d seat %s bukan milik flight %s",
@@ -401,7 +393,6 @@ func (s *bookingService) validateAndLoadSeats(
 	return seatMap, nil
 }
 
-// collectAllSeats mengumpulkan semua FlightSeat unik dari seatMap.
 func collectAllSeats(seatMap map[int]map[int]*models.FlightSeat) []*models.FlightSeat {
 	seen := map[uuid.UUID]bool{}
 	var result []*models.FlightSeat
@@ -416,7 +407,6 @@ func collectAllSeats(seatMap map[int]map[int]*models.FlightSeat) []*models.Fligh
 	return result
 }
 
-// SeatNumber helper — returns seat number string or ID fallback.
 func SeatNumber(fs *models.FlightSeat) string {
 	if fs.AircraftSeat != nil {
 		return fs.AircraftSeat.SeatNumber
@@ -536,10 +526,6 @@ func (s *bookingService) RemoveMeal(ctx context.Context, mealID uuid.UUID) error
 	return s.passengerMealRepo.Delete(ctx, mealID)
 }
 
-// ─────────────────────────────────────────────
-// CancelPNR — reset semua seat di semua segment
-// ─────────────────────────────────────────────
-
 func (s *bookingService) CancelPNR(ctx context.Context, pnrID uuid.UUID) error {
 	pnr, err := s.pnrRepo.FindByID(ctx, pnrID)
 	if err != nil {
@@ -553,8 +539,7 @@ func (s *bookingService) CancelPNR(ctx context.Context, pnrID uuid.UUID) error {
 	}
 
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Reset semua flight_seat yang di-assign di PNR ini kembali ke available
-		// Join: seat_assignments → pnr_segments → pnrs
+
 		tx.Exec(`
 			UPDATE flight_seats SET status = 'available'
 			WHERE id IN (
@@ -565,10 +550,8 @@ func (s *bookingService) CancelPNR(ctx context.Context, pnrID uuid.UUID) error {
 			)
 		`, pnrID)
 
-		// Hapus semua seat locks milik PNR ini
 		tx.Where("pnr_id = ?", pnrID).Delete(&models.SeatLock{})
 
-		// Update PNR status
 		return tx.Model(&models.PNR{}).
 			Where("id = ?", pnrID).
 			Update("status", models.PNRStatusCancelled).Error
