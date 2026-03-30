@@ -35,12 +35,12 @@ func NewUserService(userRepo repository.UserRepository, roleRepo repository.Role
 
 func (s *userService) Create(ctx context.Context, req dto.CreateUserRequest) (*models.User, error) {
 	// Check email uniqueness
-	if _, err := s.userRepo.FindByEmail(req.Email); err == nil {
+	if _, err := s.userRepo.FindByEmail(ctx, req.Email); err == nil {
 		return nil, utils.ErrEmailAlreadyExists
 	}
 
 	// Validate role exists
-	if _, err := s.roleRepo.FindById(req.RoleID); err != nil {
+	if _, err := s.roleRepo.FindById(ctx, req.RoleID); err != nil {
 		return nil, utils.ErrRoleNotFound
 	}
 
@@ -55,7 +55,7 @@ func (s *userService) Create(ctx context.Context, req dto.CreateUserRequest) (*m
 		PasswordHash: string(hash),
 		RoleID:       req.RoleID,
 	}
-	result, err := s.userRepo.Create(*user)
+	result, err := s.userRepo.Create(ctx, *user)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (s *userService) Create(ctx context.Context, req dto.CreateUserRequest) (*m
 }
 
 func (s *userService) GetByUID(ctx context.Context, uid uuid.UUID) (*models.User, error) {
-	user, err := s.userRepo.FindByUid(uid)
+	user, err := s.userRepo.FindByUid(ctx, uid)
 	if err != nil {
 		return nil, utils.ErrUserNotFound
 	}
@@ -72,7 +72,7 @@ func (s *userService) GetByUID(ctx context.Context, uid uuid.UUID) (*models.User
 
 func (s *userService) GetAll(ctx context.Context, page, limit int) (*dto.UserListResponse, error) {
 	param := dto.UserListRequest{}
-	users, err := s.userRepo.FindAll(param)
+	users, err := s.userRepo.FindAll(ctx, param)
 	if err != nil {
 		return nil, utils.ErrUserNotFound
 	}
@@ -81,7 +81,7 @@ func (s *userService) GetAll(ctx context.Context, page, limit int) (*dto.UserLis
 }
 
 func (s *userService) Update(ctx context.Context, uid uuid.UUID, req dto.UpdateUserRequest) (*models.User, error) {
-	user, err := s.userRepo.FindByUid(uid)
+	user, err := s.userRepo.FindByUid(ctx, uid)
 	if err != nil {
 		return nil, utils.ErrUserNotFound
 	}
@@ -90,13 +90,13 @@ func (s *userService) Update(ctx context.Context, uid uuid.UUID, req dto.UpdateU
 		user.FullName = req.FullName
 	}
 	if req.RoleID != 0 {
-		if _, err := s.roleRepo.FindById(req.RoleID); err != nil {
+		if _, err := s.roleRepo.FindById(ctx, req.RoleID); err != nil {
 			return nil, utils.ErrRoleNotFound
 		}
 		user.RoleID = req.RoleID
 	}
 
-	userUpdate, err := s.userRepo.Update(&user)
+	userUpdate, err := s.userRepo.Update(ctx, &user)
 	if err != nil {
 		return nil, err
 	}
@@ -104,22 +104,22 @@ func (s *userService) Update(ctx context.Context, uid uuid.UUID, req dto.UpdateU
 }
 
 func (s *userService) Delete(ctx context.Context, uid uuid.UUID) error {
-	user, err := s.userRepo.FindByUid(uid)
+	user, err := s.userRepo.FindByUid(ctx, uid)
 	if err != nil {
 		return utils.ErrUserNotFound
 	}
-	return s.userRepo.Delete(user)
+	return s.userRepo.Delete(ctx, user)
 }
 
 func (s *userService) UpdateProfile(ctx context.Context, uid uuid.UUID, req dto.UpdateProfileRequest) (*models.User, error) {
-	user, err := s.userRepo.FindByUid(uid)
+	user, err := s.userRepo.FindByUid(ctx, uid)
 	if err != nil {
 		return nil, utils.ErrUserNotFound
 	}
 	if req.FullName != "" {
 		user.FullName = req.FullName
 	}
-	userUpdate, err := s.userRepo.Update(&user)
+	userUpdate, err := s.userRepo.Update(ctx, &user)
 	if err != nil {
 		return nil, err
 	}

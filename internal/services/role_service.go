@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/dto"
@@ -11,14 +12,14 @@ import (
 )
 
 type RoleService interface {
-	FindAllRole() (*[]models.Role, error)
-	FindById(id uint) (*models.Role, error)
-	CreateRole(req *dto.RoleInput) (*models.Role, error)
-	UpdateRole(id uint, req *dto.RoleInput) (*models.Role, error)
-	DeleteRole(id uint) error
-	GetPermissions() (*[]models.Permission, error)
-	AssignPermissions(roleID uint, permissionIDs []uint) error
-	GetRolePermissions(roleID uint) ([]*models.Permission, error)
+	FindAllRole(ctx context.Context) (*[]models.Role, error)
+	FindById(ctx context.Context, id uint) (*models.Role, error)
+	CreateRole(ctx context.Context, req *dto.RoleInput) (*models.Role, error)
+	UpdateRole(ctx context.Context, id uint, req *dto.RoleInput) (*models.Role, error)
+	DeleteRole(ctx context.Context, id uint) error
+	GetPermissions(ctx context.Context) (*[]models.Permission, error)
+	AssignPermissions(ctx context.Context, roleID uint, permissionIDs []uint) error
+	GetRolePermissions(ctx context.Context, roleID uint) ([]*models.Permission, error)
 }
 
 type RoleServiceImpl struct {
@@ -27,8 +28,8 @@ type RoleServiceImpl struct {
 }
 
 // AssignPermissions implements RoleService.
-func (r *RoleServiceImpl) AssignPermissions(roleID uint, permissionIDs []uint) error {
-	role, err := r.roleRepo.FindById(roleID)
+func (r *RoleServiceImpl) AssignPermissions(ctx context.Context, roleID uint, permissionIDs []uint) error {
+	role, err := r.roleRepo.FindById(ctx, roleID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return errors.New("role not found")
@@ -44,7 +45,7 @@ func (r *RoleServiceImpl) AssignPermissions(roleID uint, permissionIDs []uint) e
 	if len(*permissions) != len(permissionIDs) {
 		return errors.New("some permissions not found")
 	}
-	_, err = r.roleRepo.UpdatePermission(role.ID, permissions)
+	_, err = r.roleRepo.UpdatePermission(ctx, role.ID, permissions)
 	if err != nil {
 		return err
 	}
@@ -53,8 +54,8 @@ func (r *RoleServiceImpl) AssignPermissions(roleID uint, permissionIDs []uint) e
 }
 
 // CreateRole implements RoleService.
-func (r *RoleServiceImpl) CreateRole(req *dto.RoleInput) (*models.Role, error) {
-	_, err := r.roleRepo.FindByName(req.Name)
+func (r *RoleServiceImpl) CreateRole(ctx context.Context, req *dto.RoleInput) (*models.Role, error) {
+	_, err := r.roleRepo.FindByName(ctx, req.Name)
 	if err == nil {
 		return nil, errors.New("role with this name already exists")
 	}
@@ -64,7 +65,7 @@ func (r *RoleServiceImpl) CreateRole(req *dto.RoleInput) (*models.Role, error) {
 		Description:  req.Description,
 		IsSystemRole: false,
 	}
-	newRole, err := r.roleRepo.Create(role)
+	newRole, err := r.roleRepo.Create(ctx, role)
 	if err != nil {
 		return nil, err
 	}
@@ -74,13 +75,13 @@ func (r *RoleServiceImpl) CreateRole(req *dto.RoleInput) (*models.Role, error) {
 		if err != nil {
 			return nil, err
 		}
-		_, err = r.roleRepo.AddPermission(newRole.ID, permissions)
+		_, err = r.roleRepo.AddPermission(ctx, newRole.ID, permissions)
 		if err != nil {
 			return nil, err
 		}
 
 	}
-	roleData, err := r.roleRepo.FindById(newRole.ID)
+	roleData, err := r.roleRepo.FindById(ctx, newRole.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -89,9 +90,9 @@ func (r *RoleServiceImpl) CreateRole(req *dto.RoleInput) (*models.Role, error) {
 }
 
 // DeleteUser implements RoleService.
-func (r *RoleServiceImpl) DeleteRole(id uint) error {
+func (r *RoleServiceImpl) DeleteRole(ctx context.Context, id uint) error {
 
-	role, err := r.roleRepo.FindById(id)
+	role, err := r.roleRepo.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return errors.New("role not found")
@@ -116,12 +117,12 @@ func (r *RoleServiceImpl) DeleteRole(id uint) error {
 		return err
 	}
 
-	return r.roleRepo.Delete(role)
+	return r.roleRepo.Delete(ctx, role)
 }
 
 // FindAllRole implements RoleService.
-func (r *RoleServiceImpl) FindAllRole() (*[]models.Role, error) {
-	roles, err := r.roleRepo.FindAll()
+func (r *RoleServiceImpl) FindAllRole(ctx context.Context) (*[]models.Role, error) {
+	roles, err := r.roleRepo.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -129,8 +130,8 @@ func (r *RoleServiceImpl) FindAllRole() (*[]models.Role, error) {
 }
 
 // FindById implements RoleService.
-func (r *RoleServiceImpl) FindById(id uint) (*models.Role, error) {
-	role, err := r.roleRepo.FindById(id)
+func (r *RoleServiceImpl) FindById(ctx context.Context, id uint) (*models.Role, error) {
+	role, err := r.roleRepo.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("role not found")
@@ -142,7 +143,7 @@ func (r *RoleServiceImpl) FindById(id uint) (*models.Role, error) {
 }
 
 // GetPermissions implements RoleService.
-func (r *RoleServiceImpl) GetPermissions() (*[]models.Permission, error) {
+func (r *RoleServiceImpl) GetPermissions(ctx context.Context) (*[]models.Permission, error) {
 	permissions, err := r.permissionRepo.FindAll()
 	if err != nil {
 		return nil, err
@@ -151,8 +152,8 @@ func (r *RoleServiceImpl) GetPermissions() (*[]models.Permission, error) {
 }
 
 // GetRolePermissions implements RoleService.
-func (r *RoleServiceImpl) GetRolePermissions(roleID uint) ([]*models.Permission, error) {
-	role, err := r.roleRepo.FindById(roleID)
+func (r *RoleServiceImpl) GetRolePermissions(ctx context.Context, roleID uint) ([]*models.Permission, error) {
+	role, err := r.roleRepo.FindById(ctx, roleID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("role not found")
@@ -165,9 +166,9 @@ func (r *RoleServiceImpl) GetRolePermissions(roleID uint) ([]*models.Permission,
 }
 
 // UpdateRole implements RoleService.
-func (r *RoleServiceImpl) UpdateRole(id uint, req *dto.RoleInput) (*models.Role, error) {
+func (r *RoleServiceImpl) UpdateRole(ctx context.Context, id uint, req *dto.RoleInput) (*models.Role, error) {
 
-	role, err := r.roleRepo.FindById(id)
+	role, err := r.roleRepo.FindById(ctx, id)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -181,7 +182,7 @@ func (r *RoleServiceImpl) UpdateRole(id uint, req *dto.RoleInput) (*models.Role,
 			return nil, errors.New("cannot change system role name")
 		}
 
-		_, err := r.roleRepo.FindByNameAndId(req.Name, id)
+		_, err := r.roleRepo.FindByNameAndId(ctx, req.Name, id)
 		if err == nil {
 			return nil, err
 		}
@@ -202,13 +203,13 @@ func (r *RoleServiceImpl) UpdateRole(id uint, req *dto.RoleInput) (*models.Role,
 		if err != nil {
 			return nil, err
 		}
-		_, err = r.roleRepo.UpdatePermission(role.ID, permissions)
+		_, err = r.roleRepo.UpdatePermission(ctx, role.ID, permissions)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	newRole, err := r.roleRepo.FindById(role.ID)
+	newRole, err := r.roleRepo.FindById(ctx, role.ID)
 
 	if err != nil {
 		return nil, err

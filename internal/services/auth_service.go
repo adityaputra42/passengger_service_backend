@@ -31,7 +31,7 @@ type authService struct {
 
 // LoginAdmin implements [AuthService].
 func (a *authService) LoginAdmin(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error) {
-	userResult, err := a.userRepo.FindByUsernameOrEmail(req.Email)
+	userResult, err := a.userRepo.FindByUsernameOrEmail(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("invalid credentials")
@@ -41,7 +41,7 @@ func (a *authService) LoginAdmin(ctx context.Context, req dto.LoginRequest) (*dt
 	if err := utils.CheckPassword(req.Password, userResult.PasswordHash); err != nil {
 		return nil, errors.New("invalid credentials")
 	}
-	role, err := a.roleRepo.FindById(userResult.RoleID)
+	role, err := a.roleRepo.FindById(ctx, userResult.RoleID)
 	if err != nil {
 		return nil, errors.New("role not found")
 	}
@@ -74,7 +74,7 @@ func (a *authService) generateTokenResponse(user *models.User) (*dto.AuthRespons
 
 // ChangePassword implements [AuthService].
 func (a *authService) ChangePassword(ctx context.Context, userUID uuid.UUID, req dto.ChangePasswordRequest) error {
-	user, err := a.userRepo.FindByUid(userUID)
+	user, err := a.userRepo.FindByUid(ctx, userUID)
 	if err != nil {
 		return utils.ErrUserNotFound
 	}
@@ -84,13 +84,13 @@ func (a *authService) ChangePassword(ctx context.Context, userUID uuid.UUID, req
 	}
 
 	user.PasswordHash = string(newPass)
-	_, err = a.userRepo.Update(&user)
+	_, err = a.userRepo.Update(ctx, &user)
 	return err
 }
 
 // Login implements [AuthService].
 func (a *authService) Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error) {
-	userResult, err := a.userRepo.FindByUsernameOrEmail(req.Email)
+	userResult, err := a.userRepo.FindByUsernameOrEmail(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("invalid credentials")
@@ -111,7 +111,7 @@ func (a *authService) Logout(ctx context.Context, userUID uuid.UUID) error {
 
 // Me implements [AuthService].
 func (a *authService) Me(ctx context.Context, userUID uuid.UUID) (*models.User, error) {
-	user, err := a.userRepo.FindByUid(userUID)
+	user, err := a.userRepo.FindByUid(ctx, userUID)
 	if err != nil {
 		return nil, utils.ErrUserNotFound
 	}
@@ -125,7 +125,7 @@ func (a *authService) RefreshToken(ctx context.Context, refreshToken string) (*d
 		return nil, errors.New("invalid refresh token")
 	}
 
-	user, err := a.userRepo.FindByUid(claims.UID)
+	user, err := a.userRepo.FindByUid(ctx, claims.UID)
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
