@@ -3,17 +3,19 @@ package services
 import (
 	"passenger_service_backend/internal/models"
 	"passenger_service_backend/internal/repository"
+
+	"github.com/google/uuid"
 )
 
 type RBACService interface {
-	CheckPermission(userID uint, resource, action string) (bool, error)
-	CheckPermissionOrOwn(userID uint, resource, action string, resourceID uint) (bool, error)
+	CheckPermission(uid uuid.UUID, resource, action string) (bool, error)
+	CheckPermissionOrOwn(uid uuid.UUID, resource, action string, resourceID uint) (bool, error)
 
-	HasRole(userID uint, roleName string) (bool, error)      // hierarchy
-	HasExactRole(userID uint, roleName string) (bool, error) // STRICT
+	HasRole(uid uuid.UUID, roleName string) (bool, error)      // hierarchy
+	HasExactRole(uid uuid.UUID, roleName string) (bool, error) // STRICT
 
-	GetUserRole(userID uint) (*models.Role, error)
-	CanManageUser(managerID, targetUserID uint) (bool, error)
+	GetUserRole(uid uuid.UUID) (*models.Role, error)
+	CanManageUser(managerID, targetUserID uuid.UUID) (bool, error)
 }
 
 type RBACServiceImpl struct {
@@ -21,8 +23,8 @@ type RBACServiceImpl struct {
 }
 
 // HasExactRole implements [RBACService].
-func (s *RBACServiceImpl) HasExactRole(userID uint, roleName string) (bool, error) {
-	userRole, err := s.repo.GetUserRole(userID)
+func (s *RBACServiceImpl) HasExactRole(uid uuid.UUID, roleName string) (bool, error) {
+	userRole, err := s.repo.GetUserRole(uid)
 	if err != nil {
 		return false, err
 	}
@@ -39,26 +41,26 @@ func NewRBACService(repo repository.RBACRepository) RBACService {
 // =======================
 
 func (s *RBACServiceImpl) CheckPermission(
-	userID uint,
+	uid uuid.UUID,
 	resource string,
 	action string,
 ) (bool, error) {
-	return s.repo.HasPermission(userID, resource, action)
+	return s.repo.HasPermission(uid, resource, action)
 }
 
 func (s *RBACServiceImpl) CheckPermissionOrOwn(
-	userID uint,
+	uid uuid.UUID,
 	resource string,
 	action string,
 	resourceID uint,
 ) (bool, error) {
 
-	if ok, _ := s.CheckPermission(userID, resource, action); ok {
+	if ok, _ := s.CheckPermission(uid, resource, action); ok {
 		return true, nil
 	}
 
-	if ok, _ := s.CheckPermission(userID, resource, action+"_own"); ok {
-		return s.repo.IsOwner(userID, resource, resourceID)
+	if ok, _ := s.CheckPermission(uid, resource, action+"_own"); ok {
+		return s.repo.IsOwner(uid, resource, resourceID)
 	}
 
 	return false, nil
@@ -68,8 +70,8 @@ func (s *RBACServiceImpl) CheckPermissionOrOwn(
 // ROLE
 // =======================
 
-func (s *RBACServiceImpl) HasRole(userID uint, roleName string) (bool, error) {
-	userRole, err := s.repo.GetUserRole(userID)
+func (s *RBACServiceImpl) HasRole(uid uuid.UUID, roleName string) (bool, error) {
+	userRole, err := s.repo.GetUserRole(uid)
 	if err != nil {
 		return false, err
 	}
@@ -80,8 +82,8 @@ func (s *RBACServiceImpl) HasRole(userID uint, roleName string) (bool, error) {
 	return userLevel >= requiredLevel, nil
 }
 
-func (s *RBACServiceImpl) GetUserRole(userID uint) (*models.Role, error) {
-	return s.repo.GetUserRole(userID)
+func (s *RBACServiceImpl) GetUserRole(uid uuid.UUID) (*models.Role, error) {
+	return s.repo.GetUserRole(uid)
 }
 
 // =======================
@@ -89,8 +91,8 @@ func (s *RBACServiceImpl) GetUserRole(userID uint) (*models.Role, error) {
 // =======================
 
 func (s *RBACServiceImpl) CanManageUser(
-	managerID uint,
-	targetUserID uint,
+	managerID uuid.UUID,
+	targetuid uuid.UUID,
 ) (bool, error) {
 
 	managerRole, err := s.GetUserRole(managerID)
@@ -98,7 +100,7 @@ func (s *RBACServiceImpl) CanManageUser(
 		return false, err
 	}
 
-	targetRole, err := s.GetUserRole(targetUserID)
+	targetRole, err := s.GetUserRole(targetuid)
 	if err != nil {
 		return false, err
 	}

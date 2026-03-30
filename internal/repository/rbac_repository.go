@@ -3,13 +3,14 @@ package repository
 import (
 	"passenger_service_backend/internal/models"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type RBACRepository interface {
-	GetUserRole(userID uint) (*models.Role, error)
-	HasPermission(userID uint, resource, action string) (bool, error)
-	IsOwner(userID uint, resource string, resourceID uint) (bool, error)
+	GetUserRole(uid uuid.UUID) (*models.Role, error)
+	HasPermission(uid uuid.UUID, resource, action string) (bool, error)
+	IsOwner(uid uuid.UUID, resource string, resourceID uint) (bool, error)
 }
 
 type RBACRepositoryImpl struct {
@@ -21,14 +22,14 @@ func NewRBACRepository(db *gorm.DB) RBACRepository {
 }
 
 // GetUserRole - Ambil role user
-func (r *RBACRepositoryImpl) GetUserRole(userID uint) (*models.Role, error) {
+func (r *RBACRepositoryImpl) GetUserRole(uid uuid.UUID) (*models.Role, error) {
 	var user models.User
 	if err := r.db.
 		Select("id", "role_id").
 		Preload("Role", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
 		}).
-		First(&user, userID).Error; err != nil {
+		First(&user, uid).Error; err != nil {
 		return nil, err
 	}
 	return &user.Role, nil
@@ -36,7 +37,7 @@ func (r *RBACRepositoryImpl) GetUserRole(userID uint) (*models.Role, error) {
 
 // HasPermission - Cek permission via join table (FAST)
 func (r *RBACRepositoryImpl) HasPermission(
-	userID uint,
+	uid uuid.UUID,
 	resource string,
 	action string,
 ) (bool, error) {
@@ -48,7 +49,7 @@ func (r *RBACRepositoryImpl) HasPermission(
 		Joins("JOIN roles ON roles.id = users.role_id").
 		Joins("JOIN role_permissions ON role_permissions.role_id = roles.id").
 		Joins("JOIN permissions ON permissions.id = role_permissions.permission_id").
-		Where("users.id = ?", userID).
+		Where("users.uid = ?", uid).
 		Where("(permissions.name = ? OR (permissions.resource = ? AND permissions.action = ?))",
 			resource+"."+action, resource, action).
 		Count(&count).Error
@@ -58,7 +59,7 @@ func (r *RBACRepositoryImpl) HasPermission(
 
 // IsOwner - Cek ownership untuk *_own permission
 func (r *RBACRepositoryImpl) IsOwner(
-	userID uint,
+	uid uuid.UUID,
 	resource string,
 	resourceID uint,
 ) (bool, error) {
@@ -68,7 +69,7 @@ func (r *RBACRepositoryImpl) IsOwner(
 		err := r.db.
 			Table("orders").
 			Select("1").
-			Where("id = ? AND user_id = ?", resourceID, userID).
+			Where("id = ? AND uid = ?", resourceID, uid).
 			Count(&count).Error
 		return count > 0, err
 
@@ -77,7 +78,7 @@ func (r *RBACRepositoryImpl) IsOwner(
 		err := r.db.
 			Table("transactions").
 			Select("1").
-			Where("tx_id = ? AND user_id = ?", resourceID, userID).
+			Where("tx_id = ? AND uid = ?", resourceID, uid).
 			Count(&count).Error
 		return count > 0, err
 
