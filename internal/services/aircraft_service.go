@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/dto"
 	"passenger_service_backend/internal/models"
 	"passenger_service_backend/internal/repository"
@@ -53,7 +54,7 @@ func (s *aircraftService) Create(ctx context.Context, req dto.CreateAircraftRequ
 }
 
 func (s *aircraftService) GetByID(ctx context.Context, id uuid.UUID) (*models.Aircraft, error) {
-	a, err := s.aircraftRepo.FindByID(ctx, id)
+	a, err := s.aircraftRepo.FindByID(ctx, nil, id)
 	if err != nil {
 		return nil, utils.ErrAircraftNotFound
 	}
@@ -73,7 +74,7 @@ func (s *aircraftService) GetWithSeats(ctx context.Context, id uuid.UUID) (*mode
 }
 
 func (s *aircraftService) Update(ctx context.Context, id uuid.UUID, req dto.UpdateAircraftRequest) (*models.Aircraft, error) {
-	aircraft, err := s.aircraftRepo.FindByID(ctx, id)
+	aircraft, err := s.aircraftRepo.FindByID(ctx, nil, id)
 	if err != nil {
 		return nil, utils.ErrAircraftNotFound
 	}
@@ -83,14 +84,14 @@ func (s *aircraftService) Update(ctx context.Context, id uuid.UUID, req dto.Upda
 	if req.Manufacturer != "" {
 		aircraft.Manufacturer = req.Manufacturer
 	}
-	if err := s.aircraftRepo.Update(ctx, aircraft); err != nil {
+	if err := s.aircraftRepo.Update(ctx, nil, aircraft); err != nil {
 		return nil, err
 	}
 	return aircraft, nil
 }
 
 func (s *aircraftService) Delete(ctx context.Context, id uuid.UUID) error {
-	if _, err := s.aircraftRepo.FindByID(ctx, id); err != nil {
+	if _, err := s.aircraftRepo.FindByID(ctx, nil, id); err != nil {
 		return utils.ErrAircraftNotFound
 	}
 	return s.aircraftRepo.Delete(ctx, id)
@@ -98,59 +99,66 @@ func (s *aircraftService) Delete(ctx context.Context, id uuid.UUID) error {
 
 // GenerateSeats bulk-creates AircraftSeats from a layout config.
 func (s *aircraftService) GenerateSeats(ctx context.Context, aircraftID uuid.UUID, req dto.GenerateSeatsRequest) ([]models.AircraftSeat, error) {
-	aircraft, err := s.aircraftRepo.FindByID(ctx, aircraftID)
-	if err != nil {
-		return nil, utils.ErrAircraftNotFound
-	}
-
-	// Build class → SeatClass map
-	classMap := map[string]*models.SeatClass{}
-	for _, cfg := range req.Classes {
-		sc, err := s.seatClassRepo.FindByCode(ctx, cfg.ClassCode)
-		if err != nil {
-			return nil, fmt.Errorf("seat class %q not found: %w", cfg.ClassCode, err)
-		}
-		classMap[cfg.ClassCode] = sc
-	}
 
 	var seats []models.AircraftSeat
 	exitSet := map[int]bool{}
 
-	row := 1
-	for _, cfg := range req.Classes {
-		sc := classMap[cfg.ClassCode]
-		// collect exit rows for this class block
-		for _, er := range cfg.ExitRowNums {
-			exitSet[er] = true
-		}
-		for r := 0; r < cfg.Rows; r++ {
-			for i, letter := range cfg.Letters {
-				seatType := determineSeatType(letter, cfg.Letters)
-				classID := sc.ID
-				seat := models.AircraftSeat{
-					AircraftID:  aircraftID,
-					SeatNumber:  fmt.Sprintf("%d%s", row, letter),
-					RowNumber:   row,
-					SeatLetter:  letter,
-					XPosition:   row,
-					YPosition:   i,
-					SeatClassID: &classID,
-					SeatType:    seatType,
-					IsExitRow:   exitSet[row],
-				}
-				seats = append(seats, seat)
-			}
-			row++
-		}
-	}
+	err := db.DB.Transaction(func(tx *gorm.DB) error {
 
-	if err := s.aircraftSeatRepo.BulkCreate(ctx, seats); err != nil {
+		aircraft, err := s.aircraftRepo.FindByID(ctx, tx, aircraftID)
+		if err != nil {
+			return utils.ErrAircraftNotFound
+		}
+
+		classMap := map[string]*models.SeatClass{}
+		for _, cfg := range req.Classes {
+			sc, err := s.seatClassRepo.FindByCode(ctx, tx, cfg.ClassCode)
+			if err != nil {
+				return fmt.Errorf("seat class %q not found: %w", cfg.ClassCode, err)
+			}
+			classMap[cfg.ClassCode] = sc
+		}
+
+		row := 1
+		for _, cfg := range req.Classes {
+			sc := classMap[cfg.ClassCode]
+			for _, er := range cfg.ExitRowNums {
+				exitSet[er] = true
+			}
+			for r := 0; r < cfg.Rows; r++ {
+				for i, letter := range cfg.Letters {
+					seatType := determineSeatType(letter, cfg.Letters)
+					classID := sc.ID
+					seat := models.AircraftSeat{
+						AircraftID:  aircraftID,
+						SeatNumber:  fmt.Sprintf("%d%s", row, letter),
+						RowNumber:   row,
+						SeatLetter:  letter,
+						XPosition:   row,
+						YPosition:   i,
+						SeatClassID: &classID,
+						SeatType:    seatType,
+						IsExitRow:   exitSet[row],
+					}
+					seats = append(seats, seat)
+				}
+				row++
+			}
+		}
+
+		if err := s.aircraftSeatRepo.BulkCreate(ctx, tx, seats); err != nil {
+			return err
+		}
+
+		aircraft.TotalSeats = len(seats)
+		if err = s.aircraftRepo.Update(ctx, tx, aircraft); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
-
-	// Update total seats on aircraft
-	aircraft.TotalSeats = len(seats)
-	_ = s.aircraftRepo.Update(ctx, aircraft)
 
 	return seats, nil
 }
@@ -164,7 +172,6 @@ func determineSeatType(letter string, letters []string) string {
 	if letter == first || letter == last {
 		return "window"
 	}
-	// Middle columns adjacent to aisle (assumes standard layout)
 	mid := n / 2
 	if letter == letters[mid-1] || letter == letters[mid] {
 		return "aisle"

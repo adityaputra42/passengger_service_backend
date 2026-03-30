@@ -7,10 +7,11 @@ import (
 	"passenger_service_backend/internal/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type AircraftSeatRepository interface {
-	BulkCreate(ctx context.Context, seats []models.AircraftSeat) error
+	BulkCreate(ctx context.Context, tx *gorm.DB, seats []models.AircraftSeat) error
 	FindByAircraftID(ctx context.Context, aircraftID uuid.UUID) ([]models.AircraftSeat, error)
 	FindByAircraftAndClass(ctx context.Context, aircraftID uuid.UUID, classCode string) ([]models.AircraftSeat, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*models.AircraftSeat, error)
@@ -25,11 +26,17 @@ func NewAircraftSeatRepository() AircraftSeatRepository {
 	return &aircraftSeatRepository{}
 }
 
-func (r *aircraftSeatRepository) BulkCreate(ctx context.Context, seats []models.AircraftSeat) error {
+func (r *aircraftSeatRepository) BulkCreate(ctx context.Context, tx *gorm.DB, seats []models.AircraftSeat) error {
 	if len(seats) == 0 {
 		return nil
 	}
-	if err := db.DB.WithContext(ctx).CreateInBatches(seats, 100).Error; err != nil {
+	database := db.DB
+
+	if tx != nil {
+		database = tx
+	}
+
+	if err := database.WithContext(ctx).CreateInBatches(seats, 100).Error; err != nil {
 		return fmt.Errorf("AircraftSeatRepo.BulkCreate: %w", err)
 	}
 	return nil

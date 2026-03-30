@@ -12,17 +12,14 @@ import (
 
 type AircraftRepository interface {
 	Create(ctx context.Context, aircraft *models.Aircraft) error
-	FindByID(ctx context.Context, id uuid.UUID) (*models.Aircraft, error)
+	FindByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (*models.Aircraft, error)
 	FindAll(ctx context.Context) ([]models.Aircraft, error)
 	FindWithSeats(ctx context.Context, id uuid.UUID) (*models.Aircraft, error)
-	Update(ctx context.Context, aircraft *models.Aircraft) error
+	Update(ctx context.Context, tx *gorm.DB, aircraft *models.Aircraft) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-
-
 type aircraftRepository struct {
-
 }
 
 func NewAircraftRepository() AircraftRepository {
@@ -36,9 +33,14 @@ func (r *aircraftRepository) Create(ctx context.Context, aircraft *models.Aircra
 	return nil
 }
 
-func (r *aircraftRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Aircraft, error) {
+func (r *aircraftRepository) FindByID(ctx context.Context, tx *gorm.DB, id uuid.UUID) (*models.Aircraft, error) {
 	var aircraft models.Aircraft
-	if err := db.DB.WithContext(ctx).First(&aircraft, "id = ?", id).Error; err != nil {
+	database := db.DB
+
+	if tx != nil {
+		database = tx
+	}
+	if err := database.WithContext(ctx).First(&aircraft, "id = ?", id).Error; err != nil {
 		return nil, fmt.Errorf("AircraftRepo.FindByID: %w", err)
 	}
 	return &aircraft, nil
@@ -65,8 +67,12 @@ func (r *aircraftRepository) FindWithSeats(ctx context.Context, id uuid.UUID) (*
 	return &aircraft, nil
 }
 
-func (r *aircraftRepository) Update(ctx context.Context, aircraft *models.Aircraft) error {
-	if err := db.DB.WithContext(ctx).Save(aircraft).Error; err != nil {
+func (r *aircraftRepository) Update(ctx context.Context, tx *gorm.DB, aircraft *models.Aircraft) error {
+	database := db.DB
+	if tx != nil {
+		database = tx
+	}
+	if err := database.WithContext(ctx).Save(aircraft).Error; err != nil {
 		return fmt.Errorf("AircraftRepo.Update: %w", err)
 	}
 	return nil
@@ -78,6 +84,3 @@ func (r *aircraftRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 	return nil
 }
-
-
-

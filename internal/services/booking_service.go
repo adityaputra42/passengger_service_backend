@@ -193,7 +193,6 @@ func (s *bookingService) CreateBooking(ctx context.Context, req dto.CreateBookin
 			passengers = append(passengers, pass)
 		}
 
-		// 2f. Create Segments + 2g. SeatAssignments per segment
 		for segIdx, segReq := range req.Segments {
 			flightID := flights[segIdx].ID
 			segment := &models.PNRSegment{
@@ -205,7 +204,6 @@ func (s *bookingService) CreateBooking(ctx context.Context, req dto.CreateBookin
 				return fmt.Errorf("create segment %d: %w", segIdx+1, err)
 			}
 
-			// Create SeatAssignment untuk setiap seat selection di segment ini
 			segID := segment.ID
 			for _, sel := range segReq.SeatSelections {
 				passenger := passengers[sel.PassengerIndex]
@@ -277,9 +275,6 @@ func (s *bookingService) loadAndValidateFlights(ctx context.Context, segs []dto.
 	return flights, nil
 }
 
-// validateSegmentChronology memastikan departure tiap segment
-// terjadi setelah arrival segment sebelumnya.
-// Memberikan toleransi minimum 30 menit koneksi antar flight.
 func (s *bookingService) validateSegmentChronology(flights []*models.Flight) error {
 	const minConnectionMinutes = 30
 	for i := 1; i < len(flights); i++ {

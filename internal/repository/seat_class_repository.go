@@ -3,17 +3,17 @@ package repository
 import (
 	"context"
 	"fmt"
+	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-
 type SeatClassRepository interface {
 	FindAll(ctx context.Context) ([]models.SeatClass, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*models.SeatClass, error)
-	FindByCode(ctx context.Context, code string) (*models.SeatClass, error)
+	FindByCode(ctx context.Context, tx *gorm.DB, code string) (*models.SeatClass, error)
 }
 
 // ─────────────────────────────────────────────
@@ -44,9 +44,14 @@ func (r *seatClassRepository) FindByID(ctx context.Context, id uuid.UUID) (*mode
 	return &sc, nil
 }
 
-func (r *seatClassRepository) FindByCode(ctx context.Context, code string) (*models.SeatClass, error) {
+func (r *seatClassRepository) FindByCode(ctx context.Context, tx *gorm.DB, code string) (*models.SeatClass, error) {
 	var sc models.SeatClass
-	if err := r.db.WithContext(ctx).Where("code = ?", code).First(&sc).Error; err != nil {
+	database := db.DB
+
+	if tx != nil {
+		database = tx
+	}
+	if err := database.WithContext(ctx).Where("code = ?", code).First(&sc).Error; err != nil {
 		return nil, fmt.Errorf("SeatClassRepo.FindByCode %q: %w", code, err)
 	}
 	return &sc, nil
