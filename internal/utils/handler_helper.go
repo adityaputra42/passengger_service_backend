@@ -2,7 +2,11 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type Response struct {
@@ -36,4 +40,23 @@ func WriteError(w http.ResponseWriter, statusCode int, message string, err error
 		Message: message,
 		Error:   errorMsg,
 	})
+}
+func ChiParam(r *http.Request, key string) string {
+	return chi.URLParam(r, key)
+}
+func ParseUUIDStr(w http.ResponseWriter, raw, field string) (uuid.UUID, error) {
+	if raw == "" {
+		err := fmt.Errorf("%s wajib diisi", field)
+		WriteError(w, http.StatusBadRequest, err.Error(), err)
+
+		return uuid.Nil, err
+	}
+	id, err := uuid.Parse(raw)
+	if err != nil {
+		msg := fmt.Sprintf("%s harus berupa UUID yang valid", field)
+		WriteError(w, http.StatusBadRequest, msg, fmt.Errorf("%s", msg))
+
+		return uuid.Nil, fmt.Errorf("%s", msg)
+	}
+	return id, nil
 }
