@@ -14,12 +14,11 @@ import (
 )
 
 type AuthHandler struct {
-	ctx         context.Context
 	authService services.AuthService
 }
 
 func NewAuthHandler(authService services.AuthService, ctx context.Context) *AuthHandler {
-	return &AuthHandler{ctx: ctx,
+	return &AuthHandler{
 		authService: authService,
 	}
 }
@@ -42,7 +41,7 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.authService.Login(h.ctx, req)
+	resp, err := h.authService.Login(r.Context(), req)
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
 		return
@@ -69,7 +68,7 @@ func (h *AuthHandler) AdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.authService.LoginAdmin(h.ctx, req)
+	resp, err := h.authService.LoginAdmin(r.Context(), req)
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
 		return
