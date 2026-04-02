@@ -1,0 +1,25 @@
+package routes
+
+import (
+	"passenger_service_backend/internal/handler"
+	"passenger_service_backend/internal/middleware"
+
+	"github.com/go-chi/chi/v5"
+)
+
+func FlightScheduleRoutes(r chi.Router, h *handler.FlightScheduleHandler, deps Dependencies) {
+	authMiddleware := middleware.AuthMiddleware(deps.UserService, deps.JWTService)
+
+	r.Route("/schedules", func(r chi.Router) {
+		r.Use(authMiddleware)
+		r.Get("/", h.List)
+		r.Get("/{id}", h.Get)
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.RequireAdminArea(deps.RBACService))
+			r.Post("/", h.Create)
+			r.Put("/{id}", h.Update)
+			r.Delete("/{id}", h.Delete)
+
+		})
+	})
+}
