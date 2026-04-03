@@ -54,8 +54,23 @@ func SetupRoutes(handler *injection.Handler, logger *zap.Logger, cfg config.CORS
 
 	r.Use(chimiddleware.AllowContentType("application/json", "multipart/form-data"))
 
-	buildDependencies(handler)
+	deps := buildDependencies(handler)
+	r.Route("/api/v1", func(api chi.Router) {
 
+		AuthRoutes(api, handler.AuthHandler, deps)
+		UserRoutes(api, handler.UserHandler, deps)
+		AirchaftRoutes(api, handler.AircraftHandler, deps)
+		AirportRoutes(api, handler.AirportHandler, deps)
+		BaggageRoutes(api, handler.BaggageHandler, deps)
+		RoleRoutes(api, handler.RoleHandler, deps)
+		BoardingPassRoutes(api, handler.BoardingPassHandler, deps)
+		BookingRoutes(api, handler.BookingHandler, deps)
+		CheckInRoutes(api, handler.CheckinHandler, deps)
+		FlightRoutes(api, handler.FlightHandler, deps)
+		FlightScheduleRoutes(api, handler.FlightScheduleHandler, deps)
+		PaymentRoutes(api, handler.PaymentHandler, deps)
+
+	})
 	return r
 }
 

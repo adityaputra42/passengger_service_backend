@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"net/http"
 	"os"
+	"passenger_service_backend/cmd/routes"
 	"passenger_service_backend/internal/config"
 	"passenger_service_backend/internal/db"
+	"passenger_service_backend/internal/injection"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -11,14 +16,14 @@ import (
 
 func initLogger() *zap.Logger {
 	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		MessageKey:     "msg",
-		CallerKey:      "caller",
-		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-		EncodeTime:     zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05"),
-		EncodeCaller:   zapcore.ShortCallerEncoder,
+		TimeKey:      "time",
+		LevelKey:     "level",
+		NameKey:      "logger",
+		MessageKey:   "msg",
+		CallerKey:    "caller",
+		EncodeLevel:  zapcore.CapitalColorLevelEncoder,
+		EncodeTime:   zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05"),
+		EncodeCaller: zapcore.ShortCallerEncoder,
 	}
 
 	core := zapcore.NewCore(
@@ -35,11 +40,10 @@ func initLogger() *zap.Logger {
 
 	return logger
 }
-func main(){
+func main() {
 
 	logger := initLogger()
-cfg:=	config.Load()
-
+	cfg := config.Load()
 
 	if err := db.Connect(cfg); err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
@@ -52,5 +56,21 @@ cfg:=	config.Load()
 	}
 	logger.Info("✅ Database seeded successfully")
 
+	handler := injection.InitializeAllHandler(cfg, context.Background())
+
+	router := routes.SetupRoutes(handler, logger, cfg.CORS)
+
+	port := cfg.Server.Port
+	if port == "" {
+		port = "8080"
+	}
+	fmt.Printf("\n")
+	fmt.Printf("╔════════════════════════════════════════╗\n")
+	fmt.Printf("║  Server is running on port %-4s        ║\n", port)
+	fmt.Printf("╚════════════════════════════════════════╝\n")
+	fmt.Printf("\n")
+	if err := http.ListenAndServe(":"+port, router); err != nil {
+		logger.Fatal("Failed to start server", zap.Error(err))
+	}
 
 }

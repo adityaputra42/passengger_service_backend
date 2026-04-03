@@ -446,9 +446,10 @@ func seedAircrafts() error {
 				for r := 0; r < seed.bizRows; r++ {
 					for i, letter := range bizLetters {
 						seatType := "middle"
-						if letter == "A" || letter == "D" {
+						switch letter {
+						case "A", "D":
 							seatType = "window"
-						} else if letter == "B" || letter == "C" {
+						case "B", "C":
 							seatType = "aisle"
 						}
 						seat := models.AircraftSeat{
@@ -476,9 +477,10 @@ func seedAircrafts() error {
 					isExit := (r == seed.econRows/2)
 					for i, letter := range econLetters {
 						seatType := "middle"
-						if letter == "A" || letter == "F" {
+						switch letter {
+						case "A", "F":
 							seatType = "window"
-						} else if letter == "C" || letter == "D" {
+						case "C", "D":
 							seatType = "aisle"
 						}
 						seat := models.AircraftSeat{
