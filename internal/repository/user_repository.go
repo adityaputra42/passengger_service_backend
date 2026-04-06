@@ -28,12 +28,12 @@ func (u *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (mod
 
 	err := u.db.WithContext(ctx).
 		Select("uid", "email", "full_name", "password_hash", "role_id", "created_at", "updated_at").
-		Preload("Role", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
-		}).
-		Preload("Role.Permissions", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
-		}).
+		// Preload("Role", func(db *gorm.DB) *gorm.DB {
+		// 	return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
+		// }).
+		// Preload("Role.Permissions", func(db *gorm.DB) *gorm.DB {
+		// 	return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
+		// }).
 		Where("email = ?", email).
 		First(&user).Error
 
@@ -45,12 +45,12 @@ func (u *UserRepositoryImpl) FindByUsernameOrEmail(ctx context.Context, identifi
 
 	err := u.db.WithContext(ctx).
 		Select("uid", "email", "full_name", "password_hash", "role_id", "created_at", "updated_at").
-		Preload("Role", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
-		}).
-		Preload("Role.Permissions", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
-		}).
+		// Preload("Role", func(db *gorm.DB) *gorm.DB {
+		// 	return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
+		// }).
+		// Preload("Role.Permissions", func(db *gorm.DB) *gorm.DB {
+		// 	return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
+		// }).
 		Where("email = ?", identifier).
 		First(&user).Error
 
@@ -71,9 +71,9 @@ func (u *UserRepositoryImpl) Create(ctx context.Context, param models.User) (mod
 		Preload("Role", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
 		}).
-		Preload("Role.Permissions", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
-		}).
+		// Preload("Role.Permissions", func(db *gorm.DB) *gorm.DB {
+		// 	return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
+		// }).
 		First(&result, param.UID).Error
 
 	return result, err
@@ -117,12 +117,12 @@ func (u *UserRepositoryImpl) FindByUid(ctx context.Context, id uuid.UUID) (model
 	var user models.User
 	err := u.db.WithContext(ctx).
 		Select("uid", "email", "full_name", "password_hash", "role_id", "created_at", "updated_at").
-		Preload("Role", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
-		}).
-		Preload("Role.Permissions", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
-		}).
+		// Preload("Role", func(db *gorm.DB) *gorm.DB {
+		// 	return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
+		// }).
+		// Preload("Role.Permissions", func(db *gorm.DB) *gorm.DB {
+		// 	return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
+		// }).
 		First(&user, id).Error
 	return user, err
 }
@@ -145,12 +145,12 @@ func (u *UserRepositoryImpl) Update(ctx context.Context, param *models.User) (mo
 
 	err := db.
 		Select("uid", "email", "full_name", "password_hash", "role_id", "created_at", "updated_at").
-		Preload("Role", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
-		}).
-		Preload("Role.Permissions", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
-		}).
+		// Preload("Role", func(db *gorm.DB) *gorm.DB {
+		// 	return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
+		// }).
+		// Preload("Role.Permissions", func(db *gorm.DB) *gorm.DB {
+		// 	return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
+		// }).
 		First(&result, param.UID).Error
 
 	return result, err

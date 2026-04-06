@@ -14,13 +14,13 @@ import (
 )
 
 type AuthService interface {
-	Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error)
-	LoginAdmin(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error)
-	RefreshToken(ctx context.Context, refreshToken string) (*dto.AuthResponse, error)
+	Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponseDTO, error)
+	LoginAdmin(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponseDTO, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*dto.AuthResponseDTO, error)
 	Logout(ctx context.Context, userUID uuid.UUID) error
 	Me(ctx context.Context, userUID uuid.UUID) (*models.User, error)
 	ChangePassword(ctx context.Context, userUID uuid.UUID, req dto.ChangePasswordRequest) error
-	generateTokenResponse(user *models.User) (*dto.AuthResponse, error)
+	generateTokenResponse(user *models.User) (*dto.AuthResponseDTO, error)
 }
 
 type authService struct {
@@ -30,7 +30,7 @@ type authService struct {
 }
 
 // LoginAdmin implements [AuthService].
-func (a *authService) LoginAdmin(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error) {
+func (a *authService) LoginAdmin(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponseDTO, error) {
 	userResult, err := a.userRepo.FindByUsernameOrEmail(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -53,7 +53,7 @@ func (a *authService) LoginAdmin(ctx context.Context, req dto.LoginRequest) (*dt
 }
 
 // generateTokenResponse implements [AuthService].
-func (a *authService) generateTokenResponse(user *models.User) (*dto.AuthResponse, error) {
+func (a *authService) generateTokenResponse(user *models.User) (*dto.AuthResponseDTO, error) {
 	accessToken, expiresAt, err := a.jwtService.GenerateAccessToken(user)
 	if err != nil {
 		return nil, err
@@ -64,11 +64,11 @@ func (a *authService) generateTokenResponse(user *models.User) (*dto.AuthRespons
 		return nil, err
 	}
 
-	return &dto.AuthResponse{
+	return &dto.AuthResponseDTO{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		ExpiresAt:    expiresAt,
-		User:         user,
+		User:         dto.ToUserResponse(user),
 	}, nil
 }
 
@@ -89,7 +89,7 @@ func (a *authService) ChangePassword(ctx context.Context, userUID uuid.UUID, req
 }
 
 // Login implements [AuthService].
-func (a *authService) Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error) {
+func (a *authService) Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponseDTO, error) {
 	userResult, err := a.userRepo.FindByUsernameOrEmail(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -119,7 +119,7 @@ func (a *authService) Me(ctx context.Context, userUID uuid.UUID) (*models.User, 
 }
 
 // RefreshToken implements [AuthService].
-func (a *authService) RefreshToken(ctx context.Context, refreshToken string) (*dto.AuthResponse, error) {
+func (a *authService) RefreshToken(ctx context.Context, refreshToken string) (*dto.AuthResponseDTO, error) {
 	claims, err := a.jwtService.ValidateRefreshToken(refreshToken)
 	if err != nil {
 		return nil, errors.New("invalid refresh token")

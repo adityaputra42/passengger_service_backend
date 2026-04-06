@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-
 type User struct {
 	UID          uuid.UUID `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"uid"`
 	Email        string    `gorm:"type:varchar(255);uniqueIndex;not null"           json:"email"          validate:"required,email,max=255"`
@@ -25,7 +24,6 @@ func (u *User) BeforeCreate(tx *gorm.DB) error {
 	}
 	return nil
 }
-
 
 func (User) TableName() string {
 	return "users"

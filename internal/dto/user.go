@@ -7,16 +7,15 @@ import (
 	"github.com/google/uuid"
 )
 
-
 type UpdateProfileRequest struct {
 	FullName string `json:"full_name" validate:"omitempty,min=2,max=255"`
 }
 
 type CreateUserRequest struct {
-	Email     string `json:"email" validate:"omitempty,email"`
+	Email    string `json:"email" validate:"omitempty,email"`
 	FullName string `json:"full_name" validate:"omitempty,min=1,max=50"`
-	Password  string `json:"password" validate:"required,min=8,max=100"`
-	RoleID    uint   `json:"role_id" validate:"required,min=1"`
+	Password string `json:"password" validate:"required,min=8,max=100"`
+	RoleID   uint   `json:"role_id" validate:"required,min=1"`
 }
 
 type UpdateUserRequest struct {
@@ -38,14 +37,14 @@ type UserListRequest struct {
 }
 
 type UserResponse struct {
-	UID         uuid.UUID    `json:"uid"`
-	Email       string       `json:"email"`
-	FullName    string       `json:"full_name"`
-	RoleID      uint         `json:"role_id"`
-	Role        RoleResponse `json:"role"`
-	Permissions []string     `json:"permissions"`
-	CreatedAt   time.Time    `json:"created_at"`
-	UpdatedAt   time.Time    `json:"updated_at"`
+	UID      uuid.UUID `json:"uid"`
+	Email    string    `json:"email"`
+	FullName string    `json:"full_name"`
+	RoleID   uint      `json:"role_id"`
+	// Role        RoleResponse `json:"role"`
+	// Permissions []string  `json:"permissions"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type UserListResponse struct {
@@ -61,19 +60,19 @@ func ToUserResponse(u *models.User) *UserResponse {
 	for _, p := range u.Role.Permissions {
 		permissions = append(permissions, p.Name)
 	}
-	role := RoleResponse{}
-	if r := ToRoleResponse(&u.Role); r != nil {
-		role = *r
-	}
+	// role := RoleResponse{}
+	// if r := ToRoleResponse(&u.Role); r != nil {
+	// 	role = *r
+	// }
 	return &UserResponse{
-		UID:         u.UID,
-		Email:       u.Email,
-		FullName:    u.FullName,
-		RoleID:      u.RoleID,
-		Role:        role,
-		Permissions: permissions,
-		CreatedAt:   u.CreatedAt,
-		UpdatedAt:   u.UpdatedAt,
+		UID:      u.UID,
+		Email:    u.Email,
+		FullName: u.FullName,
+		RoleID:   u.RoleID,
+		// Role:        role,
+		// Permissions: permissions,
+		CreatedAt: u.CreatedAt,
+		UpdatedAt: u.UpdatedAt,
 	}
 }
 
