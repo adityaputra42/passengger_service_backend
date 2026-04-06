@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type PNRRepository interface {
@@ -19,18 +19,16 @@ type PNRRepository interface {
 	Update(ctx context.Context, pnr *models.PNR) error
 }
 
-
-
 type pnrRepository struct {
-
+	db *gorm.DB
 }
 
-func NewPNRRepository() PNRRepository {
-	return &pnrRepository{}
+func NewPNRRepository(db *gorm.DB) PNRRepository {
+	return &pnrRepository{db: db}
 }
 
 func (r *pnrRepository) Create(ctx context.Context, pnr *models.PNR) error {
-	if err := db.DB.WithContext(ctx).Create(pnr).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(pnr).Error; err != nil {
 		return fmt.Errorf("PNRRepo.Create: %w", err)
 	}
 	return nil
@@ -38,7 +36,7 @@ func (r *pnrRepository) Create(ctx context.Context, pnr *models.PNR) error {
 
 func (r *pnrRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.PNR, error) {
 	var pnr models.PNR
-	if err := db.DB.WithContext(ctx).First(&pnr, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&pnr, "id = ?", id).Error; err != nil {
 		return nil, fmt.Errorf("PNRRepo.FindByID: %w", err)
 	}
 	return &pnr, nil
@@ -46,7 +44,7 @@ func (r *pnrRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.PNR
 
 func (r *pnrRepository) FindByLocator(ctx context.Context, locator string) (*models.PNR, error) {
 	var pnr models.PNR
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Where("record_locator = ?", locator).
 		First(&pnr).Error; err != nil {
 		return nil, fmt.Errorf("PNRRepo.FindByLocator: %w", err)
@@ -57,7 +55,7 @@ func (r *pnrRepository) FindByLocator(ctx context.Context, locator string) (*mod
 // FindWithFull loads PNR with all relations needed for booking summary.
 func (r *pnrRepository) FindWithFull(ctx context.Context, id uuid.UUID) (*models.PNR, error) {
 	var pnr models.PNR
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("Contact").
 		Preload("Passengers").
 		Preload("Passengers.SeatAssignment").
@@ -87,7 +85,7 @@ func (r *pnrRepository) FindAll(ctx context.Context, page, limit int) ([]models.
 	var total int64
 
 	offset := (page - 1) * limit
-	q := db.DB.WithContext(ctx).Model(&models.PNR{})
+	q := r.db.WithContext(ctx).Model(&models.PNR{})
 
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, fmt.Errorf("PNRRepo.FindAll count: %w", err)
@@ -109,7 +107,7 @@ func (r *pnrRepository) FindAll(ctx context.Context, page, limit int) ([]models.
 }
 
 func (r *pnrRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status models.PNRStatus) error {
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Model(&models.PNR{}).
 		Where("id = ?", id).
 		Update("status", status).Error; err != nil {
@@ -119,7 +117,7 @@ func (r *pnrRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status m
 }
 
 func (r *pnrRepository) Update(ctx context.Context, pnr *models.PNR) error {
-	if err := db.DB.WithContext(ctx).Save(pnr).Error; err != nil {
+	if err := r.db.WithContext(ctx).Save(pnr).Error; err != nil {
 		return fmt.Errorf("PNRRepo.Update: %w", err)
 	}
 	return nil

@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type SeatAssignmentRepository interface {
@@ -19,17 +19,16 @@ type SeatAssignmentRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-
 type seatAssignmentRepository struct {
-
+	db *gorm.DB
 }
 
-func NewSeatAssignmentRepository() SeatAssignmentRepository {
-	return &seatAssignmentRepository{}
+func NewSeatAssignmentRepository(db *gorm.DB) SeatAssignmentRepository {
+	return &seatAssignmentRepository{db: db}
 }
 
 func (r *seatAssignmentRepository) Create(ctx context.Context, a *models.SeatAssignment) error {
-	if err := db.DB.WithContext(ctx).Create(a).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(a).Error; err != nil {
 		return fmt.Errorf("SeatAssignmentRepo.Create: %w", err)
 	}
 	return nil
@@ -37,7 +36,7 @@ func (r *seatAssignmentRepository) Create(ctx context.Context, a *models.SeatAss
 
 func (r *seatAssignmentRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.SeatAssignment, error) {
 	var a models.SeatAssignment
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
 		Preload("FlightSeat").
 		Preload("FlightSeat.AircraftSeat").
@@ -50,7 +49,7 @@ func (r *seatAssignmentRepository) FindByID(ctx context.Context, id uuid.UUID) (
 
 func (r *seatAssignmentRepository) FindByPassengerID(ctx context.Context, passengerID uuid.UUID) (*models.SeatAssignment, error) {
 	var a models.SeatAssignment
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("FlightSeat").
 		Preload("FlightSeat.AircraftSeat").
 		Preload("FlightSeat.AircraftSeat.SeatClass").
@@ -63,7 +62,7 @@ func (r *seatAssignmentRepository) FindByPassengerID(ctx context.Context, passen
 
 func (r *seatAssignmentRepository) FindBySegmentID(ctx context.Context, segmentID uuid.UUID) ([]models.SeatAssignment, error) {
 	var assignments []models.SeatAssignment
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
 		Preload("FlightSeat").
 		Preload("FlightSeat.AircraftSeat").
@@ -76,7 +75,7 @@ func (r *seatAssignmentRepository) FindBySegmentID(ctx context.Context, segmentI
 
 func (r *seatAssignmentRepository) FindByFlightSeatID(ctx context.Context, flightSeatID uuid.UUID) (*models.SeatAssignment, error) {
 	var a models.SeatAssignment
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Where("flight_seat_id = ?", flightSeatID).
 		First(&a).Error; err != nil {
 		return nil, fmt.Errorf("SeatAssignmentRepo.FindByFlightSeatID: %w", err)
@@ -85,14 +84,14 @@ func (r *seatAssignmentRepository) FindByFlightSeatID(ctx context.Context, fligh
 }
 
 func (r *seatAssignmentRepository) Update(ctx context.Context, a *models.SeatAssignment) error {
-	if err := db.DB.WithContext(ctx).Save(a).Error; err != nil {
+	if err := r.db.WithContext(ctx).Save(a).Error; err != nil {
 		return fmt.Errorf("SeatAssignmentRepo.Update: %w", err)
 	}
 	return nil
 }
 
 func (r *seatAssignmentRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := db.DB.WithContext(ctx).Delete(&models.SeatAssignment{}, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Delete(&models.SeatAssignment{}, "id = ?", id).Error; err != nil {
 		return fmt.Errorf("SeatAssignmentRepo.Delete: %w", err)
 	}
 	return nil

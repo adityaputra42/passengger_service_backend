@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type CheckinRepository interface {
@@ -18,15 +18,15 @@ type CheckinRepository interface {
 }
 
 type checkinRepository struct {
-
+	db *gorm.DB
 }
 
-func NewCheckinRepository() CheckinRepository {
-	return &checkinRepository{}
+func NewCheckinRepository(db *gorm.DB) CheckinRepository {
+	return &checkinRepository{db: db}
 }
 
 func (r *checkinRepository) Create(ctx context.Context, c *models.Checkin) error {
-	if err := db.DB.WithContext(ctx).Create(c).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(c).Error; err != nil {
 		return fmt.Errorf("CheckinRepo.Create: %w", err)
 	}
 	return nil
@@ -34,7 +34,7 @@ func (r *checkinRepository) Create(ctx context.Context, c *models.Checkin) error
 
 func (r *checkinRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Checkin, error) {
 	var c models.Checkin
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
 		Preload("Segment").
 		First(&c, "id = ?", id).Error; err != nil {
@@ -45,7 +45,7 @@ func (r *checkinRepository) FindByID(ctx context.Context, id uuid.UUID) (*models
 
 func (r *checkinRepository) FindByPassengerID(ctx context.Context, passengerID uuid.UUID) ([]models.Checkin, error) {
 	var checkins []models.Checkin
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("Segment").
 		Where("passenger_id = ?", passengerID).
 		Order("checkin_time DESC").
@@ -57,7 +57,7 @@ func (r *checkinRepository) FindByPassengerID(ctx context.Context, passengerID u
 
 func (r *checkinRepository) FindBySegmentID(ctx context.Context, segmentID uuid.UUID) ([]models.Checkin, error) {
 	var checkins []models.Checkin
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
 		Where("segment_id = ?", segmentID).
 		Find(&checkins).Error; err != nil {
@@ -68,7 +68,7 @@ func (r *checkinRepository) FindBySegmentID(ctx context.Context, segmentID uuid.
 
 func (r *checkinRepository) IsCheckedIn(ctx context.Context, passengerID, segmentID uuid.UUID) (bool, error) {
 	var count int64
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Model(&models.Checkin{}).
 		Where("passenger_id = ? AND segment_id = ?", passengerID, segmentID).
 		Count(&count).Error; err != nil {

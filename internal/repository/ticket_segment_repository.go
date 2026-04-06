@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type TicketSegmentRepository interface {
@@ -16,15 +16,15 @@ type TicketSegmentRepository interface {
 }
 
 type ticketSegmentRepository struct {
-
+	db *gorm.DB
 }
 
-func NewTicketSegmentRepository() TicketSegmentRepository {
-	return &ticketSegmentRepository{}
+func NewTicketSegmentRepository(db *gorm.DB) TicketSegmentRepository {
+	return &ticketSegmentRepository{db: db}
 }
 
 func (r *ticketSegmentRepository) Create(ctx context.Context, ts *models.TicketSegment) error {
-	if err := db.DB.WithContext(ctx).Create(ts).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(ts).Error; err != nil {
 		return fmt.Errorf("TicketSegmentRepo.Create: %w", err)
 	}
 	return nil
@@ -34,7 +34,7 @@ func (r *ticketSegmentRepository) BulkCreate(ctx context.Context, segments []mod
 	if len(segments) == 0 {
 		return nil
 	}
-	if err := db.DB.WithContext(ctx).CreateInBatches(segments, 50).Error; err != nil {
+	if err := r.db.WithContext(ctx).CreateInBatches(segments, 50).Error; err != nil {
 		return fmt.Errorf("TicketSegmentRepo.BulkCreate: %w", err)
 	}
 	return nil
@@ -42,7 +42,7 @@ func (r *ticketSegmentRepository) BulkCreate(ctx context.Context, segments []mod
 
 func (r *ticketSegmentRepository) FindByTicketID(ctx context.Context, ticketID uuid.UUID) ([]models.TicketSegment, error) {
 	var segments []models.TicketSegment
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("Segment").
 		Preload("Segment.Flight").
 		Preload("Segment.Flight.Schedule").

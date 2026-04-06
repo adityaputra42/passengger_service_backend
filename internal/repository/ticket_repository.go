@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type TicketRepository interface {
@@ -18,15 +18,15 @@ type TicketRepository interface {
 }
 
 type ticketRepository struct {
-
+	db *gorm.DB
 }
 
-func NewTicketRepository() TicketRepository {
-	return &ticketRepository{}
+func NewTicketRepository(db *gorm.DB) TicketRepository {
+	return &ticketRepository{db: db}
 }
 
 func (r *ticketRepository) Create(ctx context.Context, t *models.Ticket) error {
-	if err := db.DB.WithContext(ctx).Create(t).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(t).Error; err != nil {
 		return fmt.Errorf("TicketRepo.Create: %w", err)
 	}
 	return nil
@@ -34,7 +34,7 @@ func (r *ticketRepository) Create(ctx context.Context, t *models.Ticket) error {
 
 func (r *ticketRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Ticket, error) {
 	var t models.Ticket
-	if err := db.DB.WithContext(ctx).First(&t, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&t, "id = ?", id).Error; err != nil {
 		return nil, fmt.Errorf("TicketRepo.FindByID: %w", err)
 	}
 	return &t, nil
@@ -42,7 +42,7 @@ func (r *ticketRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.
 
 func (r *ticketRepository) FindByTicketNumber(ctx context.Context, number string) (*models.Ticket, error) {
 	var t models.Ticket
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
 		Preload("Segments").
 		Preload("Segments.Segment").
@@ -59,7 +59,7 @@ func (r *ticketRepository) FindByTicketNumber(ctx context.Context, number string
 
 func (r *ticketRepository) FindByPassengerID(ctx context.Context, passengerID uuid.UUID) (*models.Ticket, error) {
 	var t models.Ticket
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("Segments").
 		Where("passenger_id = ?", passengerID).
 		First(&t).Error; err != nil {
@@ -70,7 +70,7 @@ func (r *ticketRepository) FindByPassengerID(ctx context.Context, passengerID uu
 
 func (r *ticketRepository) FindWithSegments(ctx context.Context, id uuid.UUID) (*models.Ticket, error) {
 	var t models.Ticket
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
 		Preload("Segments").
 		Preload("Segments.Segment").

@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type PNRPassengerRepository interface {
@@ -18,17 +18,16 @@ type PNRPassengerRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-
 type pnrPassengerRepository struct {
-
+	db *gorm.DB
 }
 
-func NewPNRPassengerRepository() PNRPassengerRepository {
-	return &pnrPassengerRepository{}
+func NewPNRPassengerRepository(db *gorm.DB) PNRPassengerRepository {
+	return &pnrPassengerRepository{db: db}
 }
 
 func (r *pnrPassengerRepository) Create(ctx context.Context, p *models.PNRPassenger) error {
-	if err := db.DB.WithContext(ctx).Create(p).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(p).Error; err != nil {
 		return fmt.Errorf("PNRPassengerRepo.Create: %w", err)
 	}
 	return nil
@@ -38,7 +37,7 @@ func (r *pnrPassengerRepository) BulkCreate(ctx context.Context, passengers []mo
 	if len(passengers) == 0 {
 		return nil
 	}
-	if err := db.DB.WithContext(ctx).CreateInBatches(passengers, 50).Error; err != nil {
+	if err := r.db.WithContext(ctx).CreateInBatches(passengers, 50).Error; err != nil {
 		return fmt.Errorf("PNRPassengerRepo.BulkCreate: %w", err)
 	}
 	return nil
@@ -46,7 +45,7 @@ func (r *pnrPassengerRepository) BulkCreate(ctx context.Context, passengers []mo
 
 func (r *pnrPassengerRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.PNRPassenger, error) {
 	var p models.PNRPassenger
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("SeatAssignment").
 		Preload("Ticket").
 		First(&p, "id = ?", id).Error; err != nil {
@@ -57,7 +56,7 @@ func (r *pnrPassengerRepository) FindByID(ctx context.Context, id uuid.UUID) (*m
 
 func (r *pnrPassengerRepository) FindByPNRID(ctx context.Context, pnrID uuid.UUID) ([]models.PNRPassenger, error) {
 	var passengers []models.PNRPassenger
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("SeatAssignment").
 		Preload("SeatAssignment.FlightSeat").
 		Preload("SeatAssignment.FlightSeat.AircraftSeat").
@@ -70,14 +69,14 @@ func (r *pnrPassengerRepository) FindByPNRID(ctx context.Context, pnrID uuid.UUI
 }
 
 func (r *pnrPassengerRepository) Update(ctx context.Context, p *models.PNRPassenger) error {
-	if err := db.DB.WithContext(ctx).Save(p).Error; err != nil {
+	if err := r.db.WithContext(ctx).Save(p).Error; err != nil {
 		return fmt.Errorf("PNRPassengerRepo.Update: %w", err)
 	}
 	return nil
 }
 
 func (r *pnrPassengerRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := db.DB.WithContext(ctx).Delete(&models.PNRPassenger{}, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Delete(&models.PNRPassenger{}, "id = ?", id).Error; err != nil {
 		return fmt.Errorf("PNRPassengerRepo.Delete: %w", err)
 	}
 	return nil

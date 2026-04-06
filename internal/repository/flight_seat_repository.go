@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type FlightSeatRepository interface {
@@ -21,17 +21,18 @@ type FlightSeatRepository interface {
 }
 
 type flightSeatRepository struct {
+	db *gorm.DB
 }
 
-func NewFlightSeatRepository() FlightSeatRepository {
-	return &flightSeatRepository{}
+func NewFlightSeatRepository(db *gorm.DB) FlightSeatRepository {
+	return &flightSeatRepository{db: db}
 }
 
 func (r *flightSeatRepository) BulkCreate(ctx context.Context, seats []models.FlightSeat) error {
 	if len(seats) == 0 {
 		return nil
 	}
-	if err := db.DB.WithContext(ctx).CreateInBatches(seats, 100).Error; err != nil {
+	if err := r.db.WithContext(ctx).CreateInBatches(seats, 100).Error; err != nil {
 		return fmt.Errorf("FlightSeatRepo.BulkCreate: %w", err)
 	}
 	return nil
@@ -39,7 +40,7 @@ func (r *flightSeatRepository) BulkCreate(ctx context.Context, seats []models.Fl
 
 func (r *flightSeatRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.FlightSeat, error) {
 	var fs models.FlightSeat
-	if err := db.DB.WithContext(ctx).First(&fs, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&fs, "id = ?", id).Error; err != nil {
 		return nil, fmt.Errorf("FlightSeatRepo.FindByID: %w", err)
 	}
 	return &fs, nil
@@ -47,7 +48,7 @@ func (r *flightSeatRepository) FindByID(ctx context.Context, id uuid.UUID) (*mod
 
 func (r *flightSeatRepository) FindByFlight(ctx context.Context, flightID uuid.UUID) ([]models.FlightSeat, error) {
 	var seats []models.FlightSeat
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("AircraftSeat").
 		Preload("AircraftSeat.SeatClass").
 		Where("flight_id = ?", flightID).
@@ -60,7 +61,7 @@ func (r *flightSeatRepository) FindByFlight(ctx context.Context, flightID uuid.U
 
 func (r *flightSeatRepository) FindAvailableByFlight(ctx context.Context, flightID uuid.UUID) ([]models.FlightSeat, error) {
 	var seats []models.FlightSeat
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("AircraftSeat").
 		Preload("AircraftSeat.SeatClass").
 		Where("flight_id = ? AND status = ?", flightID, models.FlightSeatAvailable).
@@ -72,7 +73,7 @@ func (r *flightSeatRepository) FindAvailableByFlight(ctx context.Context, flight
 
 func (r *flightSeatRepository) FindAvailableByFlightAndClass(ctx context.Context, flightID uuid.UUID, classCode string) ([]models.FlightSeat, error) {
 	var seats []models.FlightSeat
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("AircraftSeat").
 		Preload("AircraftSeat.SeatClass").
 		Joins("JOIN aircraft_seats ON aircraft_seats.id = flight_seats.aircraft_seat_id").
@@ -88,7 +89,7 @@ func (r *flightSeatRepository) FindAvailableByFlightAndClass(ctx context.Context
 
 func (r *flightSeatRepository) FindWithSeatDetail(ctx context.Context, id uuid.UUID) (*models.FlightSeat, error) {
 	var fs models.FlightSeat
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("AircraftSeat").
 		Preload("AircraftSeat.SeatClass").
 		Preload("Flight").
@@ -99,7 +100,7 @@ func (r *flightSeatRepository) FindWithSeatDetail(ctx context.Context, id uuid.U
 }
 
 func (r *flightSeatRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status models.FlightSeatStatus) error {
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Model(&models.FlightSeat{}).
 		Where("id = ?", id).
 		Update("status", status).Error; err != nil {
@@ -110,7 +111,7 @@ func (r *flightSeatRepository) UpdateStatus(ctx context.Context, id uuid.UUID, s
 
 func (r *flightSeatRepository) CountAvailable(ctx context.Context, flightID uuid.UUID) (int64, error) {
 	var count int64
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Model(&models.FlightSeat{}).
 		Where("flight_id = ? AND status = ?", flightID, models.FlightSeatAvailable).
 		Count(&count).Error; err != nil {

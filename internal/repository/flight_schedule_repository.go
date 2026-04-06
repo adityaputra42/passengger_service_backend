@@ -3,12 +3,11 @@ package repository
 import (
 	"context"
 	"fmt"
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
-
 
 type FlightScheduleRepository interface {
 	Create(ctx context.Context, schedule *models.FlightSchedule) error
@@ -21,15 +20,15 @@ type FlightScheduleRepository interface {
 }
 
 type flightScheduleRepository struct {
-
+	db *gorm.DB
 }
 
-func NewFlightScheduleRepository() FlightScheduleRepository {
-	return &flightScheduleRepository{}
+func NewFlightScheduleRepository(db *gorm.DB) FlightScheduleRepository {
+	return &flightScheduleRepository{db: db}
 }
 
 func (r *flightScheduleRepository) Create(ctx context.Context, s *models.FlightSchedule) error {
-	if err := db.DB.WithContext(ctx).Create(s).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(s).Error; err != nil {
 		return fmt.Errorf("FlightScheduleRepo.Create: %w", err)
 	}
 	return nil
@@ -37,7 +36,7 @@ func (r *flightScheduleRepository) Create(ctx context.Context, s *models.FlightS
 
 func (r *flightScheduleRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.FlightSchedule, error) {
 	var s models.FlightSchedule
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("DepartureAirport").
 		Preload("ArrivalAirport").
 		First(&s, "id = ?", id).Error; err != nil {
@@ -48,7 +47,7 @@ func (r *flightScheduleRepository) FindByID(ctx context.Context, id uuid.UUID) (
 
 func (r *flightScheduleRepository) FindAll(ctx context.Context) ([]models.FlightSchedule, error) {
 	var schedules []models.FlightSchedule
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("DepartureAirport").
 		Preload("ArrivalAirport").
 		Find(&schedules).Error; err != nil {
@@ -59,7 +58,7 @@ func (r *flightScheduleRepository) FindAll(ctx context.Context) ([]models.Flight
 
 func (r *flightScheduleRepository) FindByRoute(ctx context.Context, depID, arrID uuid.UUID) ([]models.FlightSchedule, error) {
 	var schedules []models.FlightSchedule
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("DepartureAirport").
 		Preload("ArrivalAirport").
 		Where("departure_airport_id = ? AND arrival_airport_id = ?", depID, arrID).
@@ -71,7 +70,7 @@ func (r *flightScheduleRepository) FindByRoute(ctx context.Context, depID, arrID
 
 func (r *flightScheduleRepository) FindByFlightNumber(ctx context.Context, number string) (*models.FlightSchedule, error) {
 	var s models.FlightSchedule
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Preload("DepartureAirport").
 		Preload("ArrivalAirport").
 		Where("flight_number = ?", number).
@@ -82,14 +81,14 @@ func (r *flightScheduleRepository) FindByFlightNumber(ctx context.Context, numbe
 }
 
 func (r *flightScheduleRepository) Update(ctx context.Context, s *models.FlightSchedule) error {
-	if err := db.DB.WithContext(ctx).Save(s).Error; err != nil {
+	if err := r.db.WithContext(ctx).Save(s).Error; err != nil {
 		return fmt.Errorf("FlightScheduleRepo.Update: %w", err)
 	}
 	return nil
 }
 
 func (r *flightScheduleRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := db.DB.WithContext(ctx).Delete(&models.FlightSchedule{}, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Delete(&models.FlightSchedule{}, "id = ?", id).Error; err != nil {
 		return fmt.Errorf("FlightScheduleRepo.Delete: %w", err)
 	}
 	return nil

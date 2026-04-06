@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
 
 	"gorm.io/gorm"
@@ -22,24 +21,25 @@ type RoleRepository interface {
 }
 
 type RoleRepositoryImpl struct {
+	db *gorm.DB
 }
 
 // UpdatePermission implements RoleRepository.
 func (a *RoleRepositoryImpl) UpdatePermission(ctx context.Context, id uint, permissions *[]models.Permission) (*models.Role, error) {
 	role := models.Role{}
-	err := db.DB.WithContext(ctx).
+	err := a.db.WithContext(ctx).
 		Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at").
 		First(&role, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
 
-	if err := db.DB.WithContext(ctx).Model(&role).Association("Permissions").Replace(&permissions); err != nil {
+	if err := a.db.WithContext(ctx).Model(&role).Association("Permissions").Replace(&permissions); err != nil {
 		return nil, err
 	}
 
 	// Reload dengan permissions
-	err = db.DB.WithContext(ctx).
+	err = a.db.WithContext(ctx).
 		Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at").
 		Preload("Permissions", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
@@ -52,7 +52,7 @@ func (a *RoleRepositoryImpl) UpdatePermission(ctx context.Context, id uint, perm
 // FindByNameAndId implements RoleRepository.
 func (a *RoleRepositoryImpl) FindByNameAndId(ctx context.Context, name string, id uint) (*models.Role, error) {
 	var existingRole models.Role
-	err := db.DB.WithContext(ctx).
+	err := a.db.WithContext(ctx).
 		Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at").
 		Where("name = ? AND id != ?", name, id).
 		First(&existingRole).Error
@@ -71,19 +71,19 @@ func (a *RoleRepositoryImpl) FindByNameAndId(ctx context.Context, name string, i
 // AddPermission implements RoleRepository.
 func (a *RoleRepositoryImpl) AddPermission(ctx context.Context, id uint, permissions *[]models.Permission) (*models.Role, error) {
 	role := models.Role{}
-	err := db.DB.WithContext(ctx).
+	err := a.db.WithContext(ctx).
 		Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at").
 		First(&role, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
 
-	if err := db.DB.WithContext(ctx).Model(&role).Association("Permissions").Append(&permissions); err != nil {
+	if err := a.db.WithContext(ctx).Model(&role).Association("Permissions").Append(&permissions); err != nil {
 		return nil, err
 	}
 
 	// Reload dengan permissions
-	err = db.DB.WithContext(ctx).
+	err = a.db.WithContext(ctx).
 		Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at").
 		Preload("Permissions", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
@@ -96,7 +96,7 @@ func (a *RoleRepositoryImpl) AddPermission(ctx context.Context, id uint, permiss
 // FindByName implements RoleRepository.
 func (a *RoleRepositoryImpl) FindByName(ctx context.Context, name string) (models.Role, error) {
 	role := models.Role{}
-	err := db.DB.WithContext(ctx).
+	err := a.db.WithContext(ctx).
 		Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at").
 		First(&role, "name = ?", name).Error
 
@@ -107,7 +107,7 @@ func (a *RoleRepositoryImpl) FindByName(ctx context.Context, name string) (model
 func (a *RoleRepositoryImpl) Create(ctx context.Context, param models.Role) (models.Role, error) {
 	var result models.Role
 
-	db := db.DB.WithContext(ctx)
+	db := a.db.WithContext(ctx)
 
 	err := db.Create(&param).Error
 	if err != nil {
@@ -122,13 +122,13 @@ func (a *RoleRepositoryImpl) Create(ctx context.Context, param models.Role) (mod
 
 // Delete implements RoleRepository.
 func (a *RoleRepositoryImpl) Delete(ctx context.Context, param models.Role) error {
-	return db.DB.WithContext(ctx).Delete(&param).Error
+	return a.db.WithContext(ctx).Delete(&param).Error
 }
 
 // FindAll implements RoleRepository.
 func (a *RoleRepositoryImpl) FindAll(ctx context.Context) ([]models.Role, error) {
 	var roles []models.Role
-	if err := db.DB.WithContext(ctx).
+	if err := a.db.WithContext(ctx).
 		Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at").
 		Preload("Permissions", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
@@ -142,7 +142,7 @@ func (a *RoleRepositoryImpl) FindAll(ctx context.Context) ([]models.Role, error)
 // FindById implements RoleRepository.
 func (a *RoleRepositoryImpl) FindById(ctx context.Context, paramId uint) (models.Role, error) {
 	role := models.Role{}
-	err := db.DB.WithContext(ctx).
+	err := a.db.WithContext(ctx).
 		Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at").
 		Preload("Permissions", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "resource", "action", "description", "created_at", "updated_at")
@@ -156,7 +156,7 @@ func (a *RoleRepositoryImpl) FindById(ctx context.Context, paramId uint) (models
 func (a *RoleRepositoryImpl) Update(ctx context.Context, param models.Role) (models.Role, error) {
 	var result models.Role
 
-	db := db.DB.WithContext(ctx)
+	db := a.db.WithContext(ctx)
 
 	err := db.Model(&param).Updates(param).Error
 	if err != nil {
@@ -169,6 +169,6 @@ func (a *RoleRepositoryImpl) Update(ctx context.Context, param models.Role) (mod
 	return result, err
 }
 
-func NewRoleRepository() RoleRepository {
-	return &RoleRepositoryImpl{}
+func NewRoleRepository(db *gorm.DB) RoleRepository {
+	return &RoleRepositoryImpl{db: db}
 }

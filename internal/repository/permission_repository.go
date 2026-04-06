@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
+
+	"gorm.io/gorm"
 )
 
 type PermissionRepository interface {
@@ -15,12 +16,13 @@ type PermissionRepository interface {
 }
 
 type PermissionRepositoryImpl struct {
+	db *gorm.DB
 }
 
 // FindAllById implements PermissionRepository.
 func (a *PermissionRepositoryImpl) FindAllById(listId []uint) (*[]models.Permission, error) {
 	var permissions []models.Permission
-	if err := db.DB.
+	if err := a.db.
 		Select("id", "name", "resource", "action", "description", "created_at", "updated_at").
 		Where("id IN ?", listId).
 		Find(&permissions).Error; err != nil {
@@ -33,14 +35,12 @@ func (a *PermissionRepositoryImpl) FindAllById(listId []uint) (*[]models.Permiss
 func (a *PermissionRepositoryImpl) Create(param models.Permission) (models.Permission, error) {
 	var result models.Permission
 
-	db := db.DB
-
-	err := db.Create(&param).Error
+	err := a.db.Create(&param).Error
 	if err != nil {
 		return result, err
 	}
 
-	err = db.
+	err = a.db.
 		Select("id", "name", "resource", "action", "description", "created_at", "updated_at").
 		First(&result, param.ID).Error
 	return result, err
@@ -48,15 +48,14 @@ func (a *PermissionRepositoryImpl) Create(param models.Permission) (models.Permi
 
 // Delete implements PermissionRepository.
 func (a *PermissionRepositoryImpl) Delete(param models.Permission) error {
-	return db.DB.Delete(&param).Error
+	return a.db.Delete(&param).Error
 }
 
 // FindAll implements PermissionRepository.
 func (a *PermissionRepositoryImpl) FindAll() ([]models.Permission, error) {
 	var Permissions []models.Permission
-	db := db.DB
 
-	if err := db.
+	if err := a.db.
 		Select("id", "name", "resource", "action", "description", "created_at", "updated_at").
 		Find(&Permissions).Error; err != nil {
 		return nil, err
@@ -68,7 +67,7 @@ func (a *PermissionRepositoryImpl) FindAll() ([]models.Permission, error) {
 // FindById implements PermissionRepository.
 func (a *PermissionRepositoryImpl) FindById(paramId uint) (models.Permission, error) {
 	Permission := models.Permission{}
-	err := db.DB.
+	err := a.db.
 		Select("id", "name", "resource", "action", "description", "created_at", "updated_at").
 		First(&Permission, "id = ?", paramId).Error
 
@@ -79,19 +78,17 @@ func (a *PermissionRepositoryImpl) FindById(paramId uint) (models.Permission, er
 func (a *PermissionRepositoryImpl) Update(param models.Permission) (models.Permission, error) {
 	var result models.Permission
 
-	db := db.DB
-
-	err := db.Model(&param).Updates(param).Error
+	err := a.db.Model(&param).Updates(param).Error
 	if err != nil {
 		return result, err
 	}
 
-	err = db.
+	err = a.db.
 		Select("id", "name", "resource", "action", "description", "created_at", "updated_at").
 		First(&result, param.ID).Error
 	return result, err
 }
 
-func NewPermissionRepository() PermissionRepository {
-	return &PermissionRepositoryImpl{}
+func NewPermissionRepository(db *gorm.DB) PermissionRepository {
+	return &PermissionRepositoryImpl{db: db}
 }

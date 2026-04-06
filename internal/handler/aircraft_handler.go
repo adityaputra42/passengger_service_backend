@@ -16,7 +16,16 @@ func NewAircraftHandler(svc services.AircraftService) *AircraftHandler {
 	return &AircraftHandler{svc: svc}
 }
 
-// POST /aircraft  [admin]
+// CreateAircraft - POST api/v1/aircraft  [admin]
+// @Summary SignIn user
+// @Description Login with email and password to get access token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body models.LoginRequest true "Login request"
+// @Success 200 {object} utils.Response{data=models.TokenResponse} "Login successful"
+// @Failure 401 {object} utils.Response "Invalid credentials"
+// @Router /auth/login [post]
 func (h *AircraftHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateAircraftRequest
 

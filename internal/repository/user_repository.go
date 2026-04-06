@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/dto"
 	"passenger_service_backend/internal/models"
 
@@ -20,12 +19,14 @@ type UserRepository interface {
 	FindAll(ctx context.Context, param dto.UserListRequest) (*dto.UserListResponse, error)
 }
 
-type UserRepositoryImpl struct{}
+type UserRepositoryImpl struct {
+	db *gorm.DB
+}
 
 func (u *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (models.User, error) {
 	user := models.User{}
 
-	err := db.DB.WithContext(ctx).
+	err := u.db.WithContext(ctx).
 		Select("uid", "email", "full_name", "password_hash", "role_id", "created_at", "updated_at").
 		Preload("Role", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
@@ -42,7 +43,7 @@ func (u *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (mod
 func (u *UserRepositoryImpl) FindByUsernameOrEmail(ctx context.Context, identifier string) (models.User, error) {
 	user := models.User{}
 
-	err := db.DB.WithContext(ctx).
+	err := u.db.WithContext(ctx).
 		Select("uid", "email", "full_name", "password_hash", "role_id", "created_at", "updated_at").
 		Preload("Role", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
@@ -59,7 +60,7 @@ func (u *UserRepositoryImpl) FindByUsernameOrEmail(ctx context.Context, identifi
 func (u *UserRepositoryImpl) Create(ctx context.Context, param models.User) (models.User, error) {
 	var result models.User
 
-	db := db.DB.WithContext(ctx)
+	db := u.db.WithContext(ctx)
 
 	if err := db.Create(&param).Error; err != nil {
 		return result, err
@@ -79,13 +80,13 @@ func (u *UserRepositoryImpl) Create(ctx context.Context, param models.User) (mod
 }
 
 func (u *UserRepositoryImpl) Delete(ctx context.Context, param models.User) error {
-	return db.DB.WithContext(ctx).Delete(&param).Error
+	return u.db.WithContext(ctx).Delete(&param).Error
 }
 
 func (u *UserRepositoryImpl) FindAll(ctx context.Context, param dto.UserListRequest) (*dto.UserListResponse, error) {
 	offset := (param.Page - 1) * param.Limit
 
-	query := db.DB.WithContext(ctx).
+	query := u.db.WithContext(ctx).
 		Model(&models.User{}).
 		Select("uid", "email", "full_name", "password_hash", "role_id", "created_at", "updated_at").
 		Preload("Role", func(db *gorm.DB) *gorm.DB {
@@ -114,7 +115,7 @@ func (u *UserRepositoryImpl) FindAll(ctx context.Context, param dto.UserListRequ
 
 func (u *UserRepositoryImpl) FindByUid(ctx context.Context, id uuid.UUID) (models.User, error) {
 	var user models.User
-	err := db.DB.WithContext(ctx).
+	err := u.db.WithContext(ctx).
 		Select("uid", "email", "full_name", "password_hash", "role_id", "created_at", "updated_at").
 		Preload("Role", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
@@ -136,7 +137,7 @@ func (u *UserRepositoryImpl) FindByUid(ctx context.Context, id uuid.UUID) (model
 func (u *UserRepositoryImpl) Update(ctx context.Context, param *models.User) (models.User, error) {
 	var result models.User
 
-	db := db.DB.WithContext(ctx)
+	db := u.db.WithContext(ctx)
 
 	if err := db.Save(param).Error; err != nil {
 		return result, err
@@ -162,6 +163,6 @@ func (u *UserRepositoryImpl) Update(ctx context.Context, param *models.User) (mo
 
 ============================
 */
-func NewUserReposiory() UserRepository {
-	return &UserRepositoryImpl{}
+func NewUserReposiory(db *gorm.DB) UserRepository {
+	return &UserRepositoryImpl{db: db}
 }
