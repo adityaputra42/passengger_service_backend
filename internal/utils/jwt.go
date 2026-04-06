@@ -36,7 +36,7 @@ func (s *JWTService) GenerateAccessToken(user *models.User) (string, time.Time, 
 	expiresAt := time.Now().Add(s.config.JWT.AccessTokenExpiry)
 
 	claims := jwt.MapClaims{
-		"user_id": user.UID,
+		"uid":     user.UID.String(),
 		"email":   user.Email,
 		"role_id": user.RoleID,
 		"type":    "access",
@@ -64,7 +64,7 @@ func (s *JWTService) GenerateRefreshToken(user *models.User) (string, time.Time,
 	expiresAt := time.Now().Add(s.config.JWT.RefreshTokenExpiry)
 
 	claims := jwt.MapClaims{
-		"user_id": user.UID,
+		"uid":     user.UID.String(),
 		"email":   user.Email,
 		"role_id": user.RoleID,
 		"type":    "refresh",
@@ -73,7 +73,7 @@ func (s *JWTService) GenerateRefreshToken(user *models.User) (string, time.Time,
 	}
 
 	// 🔍 DEBUG: Log claims
-	log.Printf("✅ Generating Refresh Token - UserID: %d, Email: %s", user.UID, user.Email)
+	log.Printf("✅ Generating Refresh Token - UID: %d, Email: %s", user.UID, user.Email)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(s.config.JWT.RefreshSecret))
@@ -105,11 +105,16 @@ func (s *JWTService) ValidateAccessToken(tokenString string) (*JWTClaims, error)
 			log.Println("❌ JWT ERROR: Invalid token type")
 			return nil, errors.New("invalid token type")
 		}
-
-		uid, ok := claims["uid"].(uuid.UUID)
+		uidStr, ok := claims["uid"].(string)
 		if !ok {
-			log.Printf("❌ JWT ERROR: Invalid user_id claim, got: %v (type: %T)", claims["user_id"], claims["user_id"])
-			return nil, errors.New("invalid user_id claim")
+			log.Printf("❌ JWT ERROR: Invalid uid claim, got: %v (type: %T)", claims["uid"], claims["uid"])
+			return nil, errors.New("invalid uid claim")
+		}
+
+		uid, err := uuid.Parse(uidStr)
+		if err != nil {
+			log.Printf("❌ JWT ERROR: Failed to parse UUID: %v", err)
+			return nil, err
 		}
 
 		email, ok := claims["email"].(string)
@@ -162,10 +167,16 @@ func (s *JWTService) ValidateRefreshToken(tokenString string) (*JWTClaims, error
 			return nil, errors.New("invalid token type")
 		}
 
-		uid, ok := claims["uid"].(uuid.UUID)
+		uidStr, ok := claims["uid"].(string)
 		if !ok {
-			log.Printf("❌ JWT ERROR: Invalid user_id in refresh token, got: %v", claims["user_id"])
-			return nil, errors.New("invalid user_id claim")
+			log.Printf("❌ JWT ERROR: Invalid uid claim, got: %v (type: %T)", claims["uid"], claims["uid"])
+			return nil, errors.New("invalid uid claim")
+		}
+
+		uid, err := uuid.Parse(uidStr)
+		if err != nil {
+			log.Printf("❌ JWT ERROR: Failed to parse UUID: %v", err)
+			return nil, err
 		}
 
 		email, ok := claims["email"].(string)
@@ -205,7 +216,7 @@ func (s *JWTService) DebugToken(tokenString string) {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		log.Println("🔍 TOKEN DEBUG INFO:")
-		log.Printf("   user_id: %v (type: %T)", claims["user_id"], claims["user_id"])
+		log.Printf("   uid: %v (type: %T)", claims["uid"], claims["uid"])
 		log.Printf("   email: %v", claims["email"])
 		log.Printf("   role_id: %v", claims["role_id"])
 		log.Printf("   type: %v", claims["type"])

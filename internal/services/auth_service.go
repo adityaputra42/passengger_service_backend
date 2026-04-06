@@ -18,7 +18,7 @@ type AuthService interface {
 	LoginAdmin(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponseDTO, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*dto.AuthResponseDTO, error)
 	Logout(ctx context.Context, userUID uuid.UUID) error
-	Me(ctx context.Context, userUID uuid.UUID) (*models.User, error)
+	Me(ctx context.Context, userUID uuid.UUID) (*dto.UserResponse, error)
 	ChangePassword(ctx context.Context, userUID uuid.UUID, req dto.ChangePasswordRequest) error
 	generateTokenResponse(user *models.User) (*dto.AuthResponseDTO, error)
 }
@@ -78,6 +78,10 @@ func (a *authService) ChangePassword(ctx context.Context, userUID uuid.UUID, req
 	if err != nil {
 		return utils.ErrUserNotFound
 	}
+	if err := utils.CheckPassword(req.OldPassword, user.PasswordHash); err != nil {
+		return errors.New("The old password does not match the current password")
+	}
+
 	newPass, err := utils.HashPassword(req.NewPassword)
 	if err != nil {
 		return fmt.Errorf("hash new password: %w", err)
@@ -110,12 +114,13 @@ func (a *authService) Logout(ctx context.Context, userUID uuid.UUID) error {
 }
 
 // Me implements [AuthService].
-func (a *authService) Me(ctx context.Context, userUID uuid.UUID) (*models.User, error) {
+func (a *authService) Me(ctx context.Context, userUID uuid.UUID) (*dto.UserResponse, error) {
 	user, err := a.userRepo.FindByUid(ctx, userUID)
 	if err != nil {
 		return nil, utils.ErrUserNotFound
 	}
-	return &user, nil
+
+	return dto.ToUserResponse(&user), nil
 }
 
 // RefreshToken implements [AuthService].
