@@ -28,7 +28,7 @@ type contextKey string
 
 const (
 	UserContextKey   contextKey = "user"
-	UserIDContextKey contextKey = "user_id"
+	UserIDContextKey contextKey = "uid"
 	RoleIDContextKey contextKey = "role_id"
 )
 

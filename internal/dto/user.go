@@ -37,12 +37,10 @@ type UserListRequest struct {
 }
 
 type UserResponse struct {
-	UID      uuid.UUID `json:"uid"`
-	Email    string    `json:"email"`
-	FullName string    `json:"full_name"`
-	RoleID   uint      `json:"role_id"`
-	// Role        RoleResponse `json:"role"`
-	// Permissions []string  `json:"permissions"`
+	UID       uuid.UUID `json:"uid"`
+	Email     string    `json:"email"`
+	FullName  string    `json:"full_name"`
+	RoleID    uint      `json:"role_id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -56,21 +54,12 @@ func ToUserResponse(u *models.User) *UserResponse {
 	if u == nil {
 		return nil
 	}
-	permissions := make([]string, 0)
-	for _, p := range u.Role.Permissions {
-		permissions = append(permissions, p.Name)
-	}
-	// role := RoleResponse{}
-	// if r := ToRoleResponse(&u.Role); r != nil {
-	// 	role = *r
-	// }
+
 	return &UserResponse{
-		UID:      u.UID,
-		Email:    u.Email,
-		FullName: u.FullName,
-		RoleID:   u.RoleID,
-		// Role:        role,
-		// Permissions: permissions,
+		UID:       u.UID,
+		Email:     u.Email,
+		FullName:  u.FullName,
+		RoleID:    u.RoleID,
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
 	}

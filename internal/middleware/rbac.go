@@ -114,8 +114,8 @@ func RequireAdminArea(
 
 			userID := GetUserIDFromContext(r)
 
-			isAdmin, _ := rbac.HasExactRole(*userID, "admin")
-			isSuper, _ := rbac.HasExactRole(*userID, "super_admin")
+			isAdmin, _ := rbac.HasExactRole(*userID, 2)
+			isSuper, _ := rbac.HasExactRole(*userID, 1)
 
 			if !isAdmin && !isSuper {
 				sendError(w, 403, "forbidden", "Admin access only")

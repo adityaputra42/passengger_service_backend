@@ -25,7 +25,7 @@ func NewRBACRepository(db *gorm.DB) RBACRepository {
 func (r *RBACRepositoryImpl) GetUserRole(uid uuid.UUID) (*models.Role, error) {
 	var user models.User
 	if err := r.db.
-		Select("id", "role_id").
+		Select("uid", "role_id").
 		Preload("Role", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
 		}).

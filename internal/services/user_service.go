@@ -71,7 +71,8 @@ func (s *userService) GetByUID(ctx context.Context, uid uuid.UUID) (*models.User
 }
 
 func (s *userService) GetAll(ctx context.Context, page, limit int) (*dto.UserListResponse, error) {
-	param := dto.UserListRequest{}
+	param := dto.UserListRequest{Page: page, Limit: limit}
+
 	users, err := s.userRepo.FindAll(ctx, param)
 	if err != nil {
 		return nil, utils.ErrUserNotFound

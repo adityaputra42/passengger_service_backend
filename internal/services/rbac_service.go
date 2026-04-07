@@ -11,8 +11,8 @@ type RBACService interface {
 	CheckPermission(uid uuid.UUID, resource, action string) (bool, error)
 	CheckPermissionOrOwn(uid uuid.UUID, resource, action string, resourceID uint) (bool, error)
 
-	HasRole(uid uuid.UUID, roleName string) (bool, error)      // hierarchy
-	HasExactRole(uid uuid.UUID, roleName string) (bool, error) // STRICT
+	HasRole(uid uuid.UUID, roleName string) (bool, error)  // hierarchy
+	HasExactRole(uid uuid.UUID, roleId uint) (bool, error) // STRICT
 
 	GetUserRole(uid uuid.UUID) (*models.Role, error)
 	CanManageUser(managerID, targetUserID uuid.UUID) (bool, error)
@@ -23,13 +23,13 @@ type RBACServiceImpl struct {
 }
 
 // HasExactRole implements [RBACService].
-func (s *RBACServiceImpl) HasExactRole(uid uuid.UUID, roleName string) (bool, error) {
+func (s *RBACServiceImpl) HasExactRole(uid uuid.UUID, roleId uint) (bool, error) {
 	userRole, err := s.repo.GetUserRole(uid)
 	if err != nil {
 		return false, err
 	}
 
-	return userRole.Name == roleName, nil
+	return userRole.ID == roleId, nil
 }
 
 func NewRBACService(repo repository.RBACRepository) RBACService {

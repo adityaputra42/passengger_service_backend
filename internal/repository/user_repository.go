@@ -84,6 +84,7 @@ func (u *UserRepositoryImpl) Delete(ctx context.Context, param models.User) erro
 }
 
 func (u *UserRepositoryImpl) FindAll(ctx context.Context, param dto.UserListRequest) (*dto.UserListResponse, error) {
+
 	offset := (param.Page - 1) * param.Limit
 
 	query := u.db.WithContext(ctx).

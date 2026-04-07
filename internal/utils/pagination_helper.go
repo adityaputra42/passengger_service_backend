@@ -11,7 +11,7 @@ import (
 
 const (
 	defaultPage  = 1
-	defaultLimit = 20
+	defaultLimit = 10
 	maxLimit     = 100
 )
 
@@ -27,16 +27,19 @@ func UUIDParam(w http.ResponseWriter, r *http.Request, key string) (uuid.UUID, b
 }
 
 func PageLimit(r *http.Request) (page, limit int) {
-	page, _ = strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ = strconv.Atoi(r.URL.Query().Get("limit"))
-	if page < 1 {
-		page = defaultPage
+
+	pageStr := r.URL.Query().Get("page")
+	limitStr := r.URL.Query().Get("limit")
+
+	p, _ := strconv.Atoi(pageStr)
+	if p < 1 {
+		p = defaultPage
 	}
-	if limit < 1 {
-		limit = defaultLimit
+
+	l, _ := strconv.Atoi(limitStr)
+	if l < 1 {
+		l = defaultLimit
 	}
-	if limit > maxLimit {
-		limit = maxLimit
-	}
-	return
+
+	return p, l
 }

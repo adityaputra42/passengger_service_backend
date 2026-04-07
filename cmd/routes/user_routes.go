@@ -12,14 +12,17 @@ func UserRoutes(r chi.Router, h *handler.UserHandler, deps Dependencies) {
 
 	r.Route("/users", func(r chi.Router) {
 		r.Post("/", h.Create)
+
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware)
 			r.Put("/me/profile", h.UpdateProfile)
-			r.Use(middleware.RequireAdminArea(deps.RBACService))
-			r.Get("/", h.List)
-			r.Get("/{uid}", h.Get)
-			r.Put("/{uid}", h.Update)
-			r.Delete("/{uid}", h.Delete)
+			r.Group(func(r chi.Router) {
+				r.Use(middleware.RequireAdminArea(deps.RBACService))
+				r.Get("/", h.List)
+				r.Get("/{uid}", h.Get)
+				r.Put("/{uid}", h.Update)
+				r.Delete("/{uid}", h.Delete)
+			})
 		})
 
 	})

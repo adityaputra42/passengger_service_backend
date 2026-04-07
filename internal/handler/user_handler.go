@@ -43,6 +43,10 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 // GET /users  [admin]
 func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 	page, limit := utils.PageLimit(r)
+
+	fmt.Printf("Page final %d", page)
+	fmt.Printf("Limit final %d", limit)
+
 	users, err := h.svc.GetAll(r.Context(), page, limit)
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
