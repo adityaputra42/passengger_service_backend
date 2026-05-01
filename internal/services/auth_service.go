@@ -110,7 +110,7 @@ func (a *authService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Aut
 
 // Logout implements [AuthService].
 func (a *authService) Logout(ctx context.Context, userUID uuid.UUID) error {
-	panic("unimplemented")
+	return nil
 }
 
 // Me implements [AuthService].
@@ -137,8 +137,10 @@ func (a *authService) RefreshToken(ctx context.Context, refreshToken string) (*d
 
 	return a.generateTokenResponse(&user)
 }
-
-func NewAuthService(userRepo repository.UserRepository,
-	jwtService *utils.JWTService) AuthService {
-	return &authService{userRepo: userRepo, jwtService: jwtService}
+func NewAuthService(
+	userRepo repository.UserRepository,
+	roleRepo repository.RoleRepository,
+	jwtService *utils.JWTService,
+) AuthService {
+	return &authService{userRepo: userRepo, roleRepo: roleRepo, jwtService: jwtService}
 }

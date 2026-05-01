@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/sync/errgroup"
 )
 
 type FlightService interface {
@@ -49,41 +50,84 @@ func NewFlightService(
 	}
 }
 
-// Search finds available flights on a given date for a route.
+// Search finds available flights on a given date for a route.// internal/services/flight_service.go
+
 func (s *flightService) Search(ctx context.Context, req dto.SearchFlightRequest) ([]dto.FlightResult, error) {
-	dep, err := s.airportRepo.FindByCode(ctx, req.DepartureCode)
-	if err != nil {
-		return nil, utils.ErrAirportNotFound
-	}
-	arr, err := s.airportRepo.FindByCode(ctx, req.ArrivalCode)
-	if err != nil {
-		return nil, utils.ErrAirportNotFound
+	var dep, arr *models.Airport
+
+	g, gctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		dep, err = s.airportRepo.FindByCode(gctx, req.DepartureCode)
+		if err != nil {
+			return utils.ErrAirportNotFound
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		var err error
+		arr, err = s.airportRepo.FindByCode(gctx, req.ArrivalCode)
+		if err != nil {
+			return utils.ErrAirportNotFound
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	flights, err := s.flightRepo.FindAvailable(ctx, dep.ID, arr.ID, req.Date)
 	if err != nil {
 		return nil, err
 	}
-
-	results := make([]dto.FlightResult, 0, len(flights))
-	for _, f := range flights {
-		available, _ := s.flightSeatRepo.CountAvailable(ctx, f.ID)
-
-		// Get lowest available seat price
-		seats, _ := s.flightSeatRepo.FindAvailableByFlight(ctx, f.ID)
-		var lowestPrice float64
-		for _, seat := range seats {
-			if lowestPrice == 0 || seat.Price < lowestPrice {
-				lowestPrice = seat.Price
-			}
-		}
-
-		results = append(results, dto.FlightResult{
-			Flight:         f,
-			AvailableSeats: available,
-			LowestPrice:    lowestPrice,
-		})
+	type enriched struct {
+		idx    int
+		result dto.FlightResult
+		err    error
 	}
+
+	ch := make(chan enriched, len(flights))
+
+	for i, f := range flights {
+		go func(idx int, flight models.Flight) {
+			available, err := s.flightSeatRepo.CountAvailable(ctx, flight.ID)
+			if err != nil {
+				ch <- enriched{idx: idx, err: err}
+				return
+			}
+
+			seats, _ := s.flightSeatRepo.FindAvailableByFlight(ctx, flight.ID)
+			var lowestPrice float64
+			for _, seat := range seats {
+				if lowestPrice == 0 || seat.Price < lowestPrice {
+					lowestPrice = seat.Price
+				}
+			}
+
+			ch <- enriched{
+				idx: idx,
+				result: dto.FlightResult{
+					Flight:         flight,
+					AvailableSeats: available,
+					LowestPrice:    lowestPrice,
+				},
+			}
+		}(i, f)
+	}
+
+	results := make([]dto.FlightResult, len(flights))
+	for range flights {
+		e := <-ch
+		if e.err != nil {
+
+			continue
+		}
+		results[e.idx] = e.result
+	}
+
 	return results, nil
 }
 

@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 	"fmt"
-	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/models"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type BaggageRepository interface {
@@ -17,13 +17,13 @@ type BaggageRepository interface {
 	UpdateStatus(ctx context.Context, id uuid.UUID, status models.BaggageStatus) error
 }
 
+type baggageRepository struct{ db *gorm.DB }
 
-type baggageRepository struct{  }
-
-func NewBaggageRepository() BaggageRepository         { return &baggageRepository{} }
-
+func NewBaggageRepository(db *gorm.DB) BaggageRepository {
+	return &baggageRepository{db: db}
+}
 func (r *baggageRepository) Create(ctx context.Context, b *models.Baggage) error {
-	if err := db.DB.WithContext(ctx).Create(b).Error; err != nil {
+	if err := r.db.WithContext(ctx).Create(b).Error; err != nil {
 		return fmt.Errorf("BaggageRepo.Create: %w", err)
 	}
 	return nil
@@ -31,7 +31,7 @@ func (r *baggageRepository) Create(ctx context.Context, b *models.Baggage) error
 
 func (r *baggageRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Baggage, error) {
 	var b models.Baggage
-	if err := db.DB.WithContext(ctx).First(&b, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&b, "id = ?", id).Error; err != nil {
 		return nil, fmt.Errorf("BaggageRepo.FindByID: %w", err)
 	}
 	return &b, nil
@@ -39,7 +39,7 @@ func (r *baggageRepository) FindByID(ctx context.Context, id uuid.UUID) (*models
 
 func (r *baggageRepository) FindByPassengerID(ctx context.Context, id uuid.UUID) ([]models.Baggage, error) {
 	var bags []models.Baggage
-	if err := db.DB.WithContext(ctx).Where("passenger_id = ?", id).Find(&bags).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("passenger_id = ?", id).Find(&bags).Error; err != nil {
 		return nil, fmt.Errorf("BaggageRepo.FindByPassengerID: %w", err)
 	}
 	return bags, nil
@@ -47,14 +47,14 @@ func (r *baggageRepository) FindByPassengerID(ctx context.Context, id uuid.UUID)
 
 func (r *baggageRepository) FindBySegmentID(ctx context.Context, id uuid.UUID) ([]models.Baggage, error) {
 	var bags []models.Baggage
-	if err := db.DB.WithContext(ctx).Where("segment_id = ?", id).Find(&bags).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("segment_id = ?", id).Find(&bags).Error; err != nil {
 		return nil, fmt.Errorf("BaggageRepo.FindBySegmentID: %w", err)
 	}
 	return bags, nil
 }
 
 func (r *baggageRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status models.BaggageStatus) error {
-	if err := db.DB.WithContext(ctx).
+	if err := r.db.WithContext(ctx).
 		Model(&models.Baggage{}).
 		Where("id = ?", id).
 		Update("status", status).Error; err != nil {

@@ -78,23 +78,42 @@ func (s *seatLockService) Release(ctx context.Context, lockID uuid.UUID) error {
 	return s.seatLockRepo.Release(ctx, lockID)
 }
 
+// internal/services/seat_lock_service.go
+
 func (s *seatLockService) ReleaseExpired(ctx context.Context) (int, error) {
 	locks, err := s.seatLockRepo.FindExpired(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("find expired locks: %w", err)
 	}
+	if len(locks) == 0 {
+		return 0, nil
+	}
+
+	type result struct{ released bool }
+	ch := make(chan result, len(locks))
+
+	for _, lock := range locks {
+		go func(l models.SeatLock) {
+			if l.FlightSeatID != nil {
+				if err := s.flightSeatRepo.UpdateStatus(ctx, *l.FlightSeatID, models.FlightSeatAvailable); err != nil {
+					ch <- result{released: false}
+					return
+				}
+			}
+			if err := s.seatLockRepo.Release(ctx, l.ID); err != nil {
+				ch <- result{released: false}
+				return
+			}
+			ch <- result{released: true}
+		}(lock)
+	}
 
 	released := 0
-	for _, lock := range locks {
-		if lock.FlightSeatID != nil {
-			if err := s.flightSeatRepo.UpdateStatus(ctx, *lock.FlightSeatID, models.FlightSeatAvailable); err != nil {
-				continue
-			}
+	for range locks {
+		r := <-ch
+		if r.released {
+			released++
 		}
-		if err := s.seatLockRepo.Release(ctx, lock.ID); err != nil {
-			continue
-		}
-		released++
 	}
 	return released, nil
 }

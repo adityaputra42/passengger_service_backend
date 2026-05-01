@@ -5,8 +5,6 @@ import (
 	"passenger_service_backend/internal/services"
 	"strconv"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 // =======================
@@ -23,7 +21,7 @@ func RequirePermission(
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			userID := GetUserIDFromContext(r)
-			if userID == &uuid.Nil {
+			if userID == nil {
 				sendError(w, http.StatusUnauthorized, "unauthorized", "Not authenticated")
 				return
 			}

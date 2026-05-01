@@ -553,16 +553,9 @@ func (s *bookingService) CancelPNR(ctx context.Context, pnrID uuid.UUID) error {
 	})
 }
 
-// ─────────────────────────────────────────────
-// generateLocator — crypto-random 6-char alphanumeric
-// ─────────────────────────────────────────────
-
 func (s *bookingService) generateLocator(ctx context.Context) (string, error) {
 	for attempt := 0; attempt < maxLocatorRetry; attempt++ {
-		locator, err := randomString(locatorLen, locatorChars)
-		if err != nil {
-			return "", fmt.Errorf("generate locator: %w", err)
-		}
+		locator, _ := randomString(locatorLen, locatorChars)
 		if _, err := s.pnrRepo.FindByLocator(ctx, locator); err != nil {
 			return locator, nil
 		}
