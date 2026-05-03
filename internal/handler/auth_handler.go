@@ -43,7 +43,7 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.authService.Login(r.Context(), req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -70,7 +70,7 @@ func (h *AuthHandler) AdminLogin(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.authService.LoginAdmin(r.Context(), req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := h.authService.RefreshToken(r.Context(), body.RefreshToken)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -109,7 +109,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 	err := h.authService.Logout(r.Context(), *uid)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := h.authService.Me(r.Context(), *uid)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "Logout successful", user)
@@ -146,7 +146,7 @@ func (h *AuthHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 	err := h.authService.ChangePassword(r.Context(), *uid, req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "Change password successful", nil)

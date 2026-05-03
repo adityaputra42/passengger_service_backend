@@ -35,7 +35,7 @@ func (h *AircraftHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	aircraft, err := h.svc.Create(r.Context(), req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -47,7 +47,7 @@ func (h *AircraftHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *AircraftHandler) List(w http.ResponseWriter, r *http.Request) {
 	aircrafts, err := h.svc.GetAll(r.Context())
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	out := make([]dto.AircraftResponse, 0, len(aircrafts))
@@ -67,7 +67,7 @@ func (h *AircraftHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	aircraft, err := h.svc.GetByID(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -82,7 +82,7 @@ func (h *AircraftHandler) GetWithSeats(w http.ResponseWriter, r *http.Request) {
 	}
 	aircraft, err := h.svc.GetWithSeats(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -103,7 +103,7 @@ func (h *AircraftHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	aircraft, err := h.svc.Update(r.Context(), id, req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -118,7 +118,7 @@ func (h *AircraftHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	err := h.svc.Delete(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -139,7 +139,7 @@ func (h *AircraftHandler) GenerateSeats(w http.ResponseWriter, r *http.Request) 
 	}
 	seats, err := h.svc.GenerateSeats(r.Context(), id, req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	out := make([]dto.AircraftSeatResponse, 0, len(seats))

@@ -25,7 +25,7 @@ func (h *PaymentHandler) Initiate(w http.ResponseWriter, r *http.Request) {
 	}
 	payment, err := h.svc.Initiate(r.Context(), req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToPaymentResponse(payment))
@@ -48,7 +48,7 @@ func (h *PaymentHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	payment, err := h.svc.Confirm(r.Context(), id, body.Success)
 
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToPaymentResponse(payment))
@@ -63,7 +63,7 @@ func (h *PaymentHandler) Refund(w http.ResponseWriter, r *http.Request) {
 	}
 	payment, err := h.svc.Refund(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToPaymentResponse(payment))
@@ -78,7 +78,7 @@ func (h *PaymentHandler) ListByPNR(w http.ResponseWriter, r *http.Request) {
 	payments, err := h.svc.GetByPNR(r.Context(), pnrID)
 
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToPaymentResponseList(payments))

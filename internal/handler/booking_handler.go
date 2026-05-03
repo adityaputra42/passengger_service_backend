@@ -27,7 +27,7 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	pnr, err := h.svc.CreateBooking(r.Context(), req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusCreated, "success", dto.ToPNRResponse(pnr))
@@ -39,7 +39,7 @@ func (h *BookingHandler) List(w http.ResponseWriter, r *http.Request) {
 	page, limit := utils.PageLimit(r)
 	pnrs, total, err := h.svc.GetAllPNRs(r.Context(), page, limit)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToPNRListResponse(pnrs, total, page, limit))
@@ -54,7 +54,7 @@ func (h *BookingHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 	pnr, err := h.svc.GetPNRByID(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToPNRResponse(pnr))
@@ -65,7 +65,7 @@ func (h *BookingHandler) GetByLocator(w http.ResponseWriter, r *http.Request) {
 	locator := chi.URLParam(r, "locator")
 	pnr, err := h.svc.GetPNR(r.Context(), locator)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToPNRResponse(pnr))
@@ -84,7 +84,7 @@ func (h *BookingHandler) UpdateContact(w http.ResponseWriter, r *http.Request) {
 	}
 	contact, err := h.svc.UpdateContact(r.Context(), id, req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToPNRContactResponse(contact))
@@ -99,7 +99,7 @@ func (h *BookingHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	}
 	err := h.svc.CancelPNR(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", nil)
@@ -119,7 +119,7 @@ func (h *BookingHandler) AddSSR(w http.ResponseWriter, r *http.Request) {
 	}
 	ssr, err := h.svc.AddSSR(r.Context(), passengerID, req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToPassengerSSRResponse(ssr))
@@ -135,7 +135,7 @@ func (h *BookingHandler) RemoveSSR(w http.ResponseWriter, r *http.Request) {
 	err := h.svc.RemoveSSR(r.Context(), id)
 
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", nil)
@@ -154,7 +154,7 @@ func (h *BookingHandler) AddMeal(w http.ResponseWriter, r *http.Request) {
 	}
 	meal, err := h.svc.AddMeal(r.Context(), passengerID, req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToPassengerMealResponse(meal))
@@ -169,7 +169,7 @@ func (h *BookingHandler) RemoveMeal(w http.ResponseWriter, r *http.Request) {
 	}
 	err := h.svc.RemoveMeal(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", nil)

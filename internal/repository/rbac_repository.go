@@ -20,22 +20,23 @@ type RBACRepositoryImpl struct {
 func NewRBACRepository(db *gorm.DB) RBACRepository {
 	return &RBACRepositoryImpl{db: db}
 }
-
-// GetUserRole - Ambil role user
 func (r *RBACRepositoryImpl) GetUserRole(uid uuid.UUID) (*models.Role, error) {
 	var user models.User
+
 	if err := r.db.
 		Select("uid", "role_id").
 		Preload("Role", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at")
+			return db.Select("id", "name", "description", "level", "is_system_role", "created_at", "updated_at").
+				Where("deleted_at IS NULL")
 		}).
-		First(&user, uid).Error; err != nil {
+		Where("uid = ?", uid).
+		First(&user).Error; err != nil {
 		return nil, err
 	}
+
 	return &user.Role, nil
 }
 
-// HasPermission - Cek permission via join table (FAST)
 func (r *RBACRepositoryImpl) HasPermission(
 	uid uuid.UUID,
 	resource string,
@@ -43,42 +44,41 @@ func (r *RBACRepositoryImpl) HasPermission(
 ) (bool, error) {
 	var count int64
 
-	err := r.db.
-		Table("users").
-		Select("1"). // Only select constant 1 for counting
-		Joins("JOIN roles ON roles.id = users.role_id").
+	err := r.db.Model(&models.User{}).
+		Joins("JOIN roles ON roles.id = users.role_id AND roles.deleted_at IS NULL").
 		Joins("JOIN role_permissions ON role_permissions.role_id = roles.id").
-		Joins("JOIN permissions ON permissions.id = role_permissions.permission_id").
+		Joins("JOIN permissions ON permissions.id = role_permissions.permission_id AND permissions.deleted_at IS NULL").
 		Where("users.uid = ?", uid).
-		Where("(permissions.name = ? OR (permissions.resource = ? AND permissions.action = ?))",
-			resource+"."+action, resource, action).
+		Where(
+			"permissions.name = ? OR (permissions.resource = ? AND permissions.action = ?)",
+			resource+"."+action, resource, action,
+		).
 		Count(&count).Error
 
 	return count > 0, err
 }
 
-// IsOwner - Cek ownership untuk *_own permission
 func (r *RBACRepositoryImpl) IsOwner(
 	uid uuid.UUID,
 	resource string,
 	resourceID uint,
 ) (bool, error) {
 	switch resource {
-	case "orders":
+	case "pnr", "booking":
 		var count int64
-		err := r.db.
-			Table("orders").
-			Select("1").
-			Where("id = ? AND uid = ?", resourceID, uid).
+		err := r.db.Model(&models.PNRContact{}).
+			Joins("JOIN users ON users.email = pnr_contacts.email").
+			Where("users.uid = ? AND pnr_contacts.pnr_id = ?", uid, resourceID).
 			Count(&count).Error
 		return count > 0, err
 
-	case "transactions":
+	case "passenger":
 		var count int64
-		err := r.db.
-			Table("transactions").
-			Select("1").
-			Where("tx_id = ? AND uid = ?", resourceID, uid).
+		err := r.db.Model(&models.PNRPassenger{}).
+			Joins("JOIN pnrs ON pnrs.id = pnr_passengers.pnr_id").
+			Joins("JOIN pnr_contacts ON pnr_contacts.pnr_id = pnrs.id").
+			Joins("JOIN users ON users.email = pnr_contacts.email").
+			Where("users.uid = ? AND pnr_passengers.id = ?", uid, resourceID).
 			Count(&count).Error
 		return count > 0, err
 

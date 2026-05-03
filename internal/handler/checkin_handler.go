@@ -25,7 +25,7 @@ func (h *CheckinHandler) Checkin(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := h.svc.Checkin(r.Context(), req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToCheckinResultResponse(result))
@@ -40,7 +40,7 @@ func (h *CheckinHandler) GetByPassenger(w http.ResponseWriter, r *http.Request) 
 	}
 	checkins, err := h.svc.GetByPassenger(r.Context(), passengerID)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	out := make([]dto.CheckinResponse, 0, len(checkins))

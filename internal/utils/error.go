@@ -102,25 +102,6 @@ var (
 	ErrInvalidPassengerIndex    = errors.New("passenger_index tidak valid")
 )
 
-// // Errorf writes a structured error response from a string.
-// func Errorf(w http.ResponseWriter, status int, msg string) {
-// 	Error(w, status, errors.New(msg))
-// }
-
-// // ─────────────────────────────────────────────
-// // Error → HTTP status mapping
-// // ─────────────────────────────────────────────
-
-// // ServiceError maps a domain error to the correct HTTP status code
-// // and writes the response. Returns true if an error was written.
-// func ServiceError(w http.ResponseWriter, err error) bool {
-// 	if err == nil {
-// 		return false
-// 	}
-// 	status := statusFor(err)
-// 	Error(w, status, err)
-// 	return true
-// }
 
 func statusFor(err error) int {
 	switch {
@@ -156,9 +137,6 @@ func statusFor(err error) int {
 		errors.Is(err, ErrBaggageNotFound),
 		errors.Is(err, ErrSSRTypeNotFound),
 		errors.Is(err, ErrMealNotFound):
-		// errors.Is(err, ErrWalletNotFound),
-		// errors.Is(err, ErrTopUpOrderNotFound),
-		// errors.Is(err, ErrReceiverNotFound):
 		return http.StatusNotFound
 
 	// 409
@@ -171,12 +149,10 @@ func statusFor(err error) int {
 		errors.Is(err, ErrAlreadyCheckedIn),
 		errors.Is(err, ErrBoardingPassExists),
 		errors.Is(err, ErrTicketAlreadyIssued):
-		// errors.Is(err, ErrTopUpOrderFinalized):
 		return http.StatusConflict
 
 	// 410
 	case errors.Is(err, ErrPNRHoldExpired):
-		// errors.Is(err, ErrTopUpOrderExpired)
 		return http.StatusGone
 
 	// 422
@@ -194,8 +170,6 @@ func statusFor(err error) int {
 		errors.Is(err, ErrTicketRequiredCheckin),
 		errors.Is(err, ErrCheckinRequiredBoarding),
 		errors.Is(err, ErrCheckinRequiredBaggage):
-		// errors.Is(err, ErrTransferSelf),
-		// errors.Is(err, ErrInsufficientBalance):
 		return http.StatusUnprocessableEntity
 
 	default:
@@ -203,11 +177,8 @@ func statusFor(err error) int {
 	}
 }
 
-// errCode returns a short machine-readable error code.
 func errCode(err error) string {
 	switch {
-	// case errors.Is(err, ErrInsufficientBalance):
-	// 	return "INSUFFICIENT_BALANCE"
 	case errors.Is(err, ErrSeatAlreadyLocked):
 		return "SEAT_LOCKED"
 	case errors.Is(err, ErrSeatAlreadyBooked):

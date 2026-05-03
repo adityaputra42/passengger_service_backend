@@ -26,7 +26,7 @@ func (h *AirportHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	airport, err := h.svc.Create(r.Context(), req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -39,7 +39,7 @@ func (h *AirportHandler) List(w http.ResponseWriter, r *http.Request) {
 	if q != "" {
 		airports, err := h.svc.Search(r.Context(), q)
 		if err != nil {
-			utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+			utils.WriteServiceError(w, err)
 			return
 		}
 
@@ -48,7 +48,7 @@ func (h *AirportHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	airports, err := h.svc.GetAll(r.Context())
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -64,7 +64,7 @@ func (h *AirportHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	airport, err := h.svc.GetByID(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -76,7 +76,7 @@ func (h *AirportHandler) GetByCode(w http.ResponseWriter, r *http.Request) {
 	code := utils.ChiParam(r, "code")
 	airport, err := h.svc.GetByCode(r.Context(), code)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (h *AirportHandler) Update(w http.ResponseWriter, r *http.Request) {
 	airport, err := h.svc.Update(r.Context(), id, req)
 
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -114,7 +114,7 @@ func (h *AirportHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	err := h.svc.Delete(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 

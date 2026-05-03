@@ -25,7 +25,7 @@ func (h *FlightScheduleHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	sched, err := h.svc.Create(r.Context(), req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -41,7 +41,7 @@ func (h *FlightScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 	if dep != "" && arr != "" {
 		scheds, err := h.svc.GetByRoute(r.Context(), dep, arr)
 		if err != nil {
-			utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+			utils.WriteServiceError(w, err)
 			return
 		}
 		out := make([]dto.FlightScheduleResponse, 0, len(scheds))
@@ -58,7 +58,7 @@ func (h *FlightScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	scheds, err := h.svc.GetAll(r.Context())
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	out := make([]dto.FlightScheduleResponse, 0, len(scheds))
@@ -78,7 +78,7 @@ func (h *FlightScheduleHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	sched, err := h.svc.GetByID(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToFlightScheduleResponse(sched))
@@ -98,7 +98,7 @@ func (h *FlightScheduleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	sched, err := h.svc.Update(r.Context(), id, req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToFlightScheduleResponse(sched))
@@ -113,7 +113,7 @@ func (h *FlightScheduleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	err := h.svc.Delete(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 

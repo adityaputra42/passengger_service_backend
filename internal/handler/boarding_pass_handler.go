@@ -25,7 +25,7 @@ func (h *BoardingPassHandler) Issue(w http.ResponseWriter, r *http.Request) {
 	}
 	bp, err := h.svc.Issue(r.Context(), req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToBoardingPassResponse(bp))
@@ -44,7 +44,7 @@ func (h *BoardingPassHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	bp, err := h.svc.GetByPassengerAndSegment(r.Context(), passengerID, segmentID)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToBoardingPassResponse(bp))
@@ -58,7 +58,7 @@ func (h *BoardingPassHandler) GetBySegment(w http.ResponseWriter, r *http.Reques
 	}
 	bps, err := h.svc.GetBySegment(r.Context(), segmentID)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToBoardingPassResponseList(bps))

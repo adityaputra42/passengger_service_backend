@@ -26,7 +26,7 @@ func (h *BaggageHandler) Add(w http.ResponseWriter, r *http.Request) {
 	}
 	baggage, err := h.svc.Add(r.Context(), req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToBaggageResponse(baggage))
@@ -48,7 +48,7 @@ func (h *BaggageHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	baggage, err := h.svc.UpdateStatus(r.Context(), id, models.BaggageStatus(body.Status))
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToBaggageResponse(baggage))
@@ -63,7 +63,7 @@ func (h *BaggageHandler) GetByPassenger(w http.ResponseWriter, r *http.Request) 
 	}
 	bags, err := h.svc.GetByPassenger(r.Context(), passengerID)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToBaggageResponseList(bags))

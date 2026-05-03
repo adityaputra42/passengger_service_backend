@@ -26,7 +26,7 @@ func (h *RoleHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	role, err := h.svc.CreateRole(r.Context(), &req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -37,7 +37,7 @@ func (h *RoleHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *RoleHandler) List(w http.ResponseWriter, r *http.Request) {
 	roles, err := h.svc.FindAllRole(r.Context())
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -52,7 +52,7 @@ func (h *RoleHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	role, err := h.svc.FindById(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (h *RoleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	role, err := h.svc.UpdateRole(r.Context(), id, &req)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -88,7 +88,7 @@ func (h *RoleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	err := h.svc.DeleteRole(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -110,7 +110,7 @@ func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) 
 	}
 	err := h.svc.AssignPermissions(r.Context(), id, body.PermissionIDs)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -132,7 +132,7 @@ func (h *RoleHandler) ReplacePermissions(w http.ResponseWriter, r *http.Request)
 	}
 	err := h.svc.AssignPermissions(r.Context(), id, body.PermissionIDs)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 

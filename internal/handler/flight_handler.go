@@ -42,7 +42,7 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 		Date:          date,
 	})
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 
@@ -58,7 +58,7 @@ func (h *FlightHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	flight, err := h.svc.GetByID(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToFlightResponse(flight))
@@ -72,7 +72,7 @@ func (h *FlightHandler) SeatMap(w http.ResponseWriter, r *http.Request) {
 	}
 	seats, err := h.svc.GetSeatMap(r.Context(), id)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", seats)
@@ -105,7 +105,7 @@ func (h *FlightHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	}
 	count, err := h.svc.GenerateFromSchedule(r.Context(), schedID, from, to)
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", map[string]int{"generated": count})
@@ -127,7 +127,7 @@ func (h *FlightHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	err := h.svc.UpdateStatus(r.Context(), id, models.FlightStatus(body.Status))
 	if err != nil {
-		utils.WriteError(w, http.StatusUnauthorized, err.Error(), err)
+		utils.WriteServiceError(w, err)
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, "success", nil)
