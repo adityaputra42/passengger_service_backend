@@ -16,6 +16,14 @@ type Config struct {
 	SMTP     SMTPConfig
 	System   SystemConfig
 	Supabase SupabaseConfig
+	Redis    RedisConfig
+}
+
+type RedisConfig struct {
+	Host     string
+	Port     string
+	Password string
+	DB       int
 }
 
 type SupabaseConfig struct {
@@ -113,6 +121,13 @@ func Load() *Config {
 		Supabase: SupabaseConfig{
 			Url: viper.GetString("SUPABASE_URL"),
 			Key: viper.GetString("SUPABASE_KEY"),
+		},
+
+		Redis: RedisConfig{
+			Host:     viper.GetString("REDIS_HOST"),
+			Port:     viper.GetString("REDIS_PORT"),
+			Password: viper.GetString("REDIS_PASSWORD"),
+			DB:       viper.GetInt("REDIS_DB"),
 		},
 	}
 }

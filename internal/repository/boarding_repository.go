@@ -17,22 +17,22 @@ type BoardingPassRepository interface {
 	FindByPassengerAndSegment(ctx context.Context, passengerID, segmentID uuid.UUID) (*models.BoardingPass, error)
 }
 
-type boardingPassRepository struct {
+type BoardingPassRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewBoardingPassRepository(db *gorm.DB) BoardingPassRepository {
-	return &boardingPassRepository{db: db}
+	return &BoardingPassRepositoryImpl{db: db}
 }
 
-func (r *boardingPassRepository) Create(ctx context.Context, bp *models.BoardingPass) error {
+func (r *BoardingPassRepositoryImpl) Create(ctx context.Context, bp *models.BoardingPass) error {
 	if err := r.db.WithContext(ctx).Create(bp).Error; err != nil {
 		return fmt.Errorf("BoardingPassRepo.Create: %w", err)
 	}
 	return nil
 }
 
-func (r *boardingPassRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.BoardingPass, error) {
+func (r *BoardingPassRepositoryImpl) FindByID(ctx context.Context, id uuid.UUID) (*models.BoardingPass, error) {
 	var bp models.BoardingPass
 	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
@@ -47,7 +47,7 @@ func (r *boardingPassRepository) FindByID(ctx context.Context, id uuid.UUID) (*m
 	return &bp, nil
 }
 
-func (r *boardingPassRepository) FindByPassengerID(ctx context.Context, passengerID uuid.UUID) ([]models.BoardingPass, error) {
+func (r *BoardingPassRepositoryImpl) FindByPassengerID(ctx context.Context, passengerID uuid.UUID) ([]models.BoardingPass, error) {
 	var bps []models.BoardingPass
 	if err := r.db.WithContext(ctx).
 		Preload("Segment").
@@ -58,7 +58,7 @@ func (r *boardingPassRepository) FindByPassengerID(ctx context.Context, passenge
 	return bps, nil
 }
 
-func (r *boardingPassRepository) FindBySegmentID(ctx context.Context, segmentID uuid.UUID) ([]models.BoardingPass, error) {
+func (r *BoardingPassRepositoryImpl) FindBySegmentID(ctx context.Context, segmentID uuid.UUID) ([]models.BoardingPass, error) {
 	var bps []models.BoardingPass
 	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
@@ -69,7 +69,7 @@ func (r *boardingPassRepository) FindBySegmentID(ctx context.Context, segmentID 
 	return bps, nil
 }
 
-func (r *boardingPassRepository) FindByPassengerAndSegment(ctx context.Context, passengerID, segmentID uuid.UUID) (*models.BoardingPass, error) {
+func (r *BoardingPassRepositoryImpl) FindByPassengerAndSegment(ctx context.Context, passengerID, segmentID uuid.UUID) (*models.BoardingPass, error) {
 	var bp models.BoardingPass
 	if err := r.db.WithContext(ctx).
 		Preload("Segment").

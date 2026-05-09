@@ -13,15 +13,15 @@ type SSRTypeRepository interface {
 	FindByCode(ctx context.Context, code string) (*models.SSRType, error)
 }
 
-type ssrTypeRepositoryImpl struct {
+type SSRTypeRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewSSRTypeRepository(db *gorm.DB) SSRTypeRepository {
-	return &ssrTypeRepositoryImpl{db: db}
+	return &SSRTypeRepositoryImpl{db: db}
 }
 
-func (r *ssrTypeRepositoryImpl) FindAll(ctx context.Context) ([]models.SSRType, error) {
+func (r *SSRTypeRepositoryImpl) FindAll(ctx context.Context) ([]models.SSRType, error) {
 	var types []models.SSRType
 	if err := r.db.WithContext(ctx).Order("code").Find(&types).Error; err != nil {
 		return nil, fmt.Errorf("SSRTypeRepo.FindAll: %w", err)
@@ -29,7 +29,7 @@ func (r *ssrTypeRepositoryImpl) FindAll(ctx context.Context) ([]models.SSRType, 
 	return types, nil
 }
 
-func (r *ssrTypeRepositoryImpl) FindByCode(ctx context.Context, code string) (*models.SSRType, error) {
+func (r *SSRTypeRepositoryImpl) FindByCode(ctx context.Context, code string) (*models.SSRType, error) {
 	var t models.SSRType
 	if err := r.db.WithContext(ctx).Where("code = ?", code).First(&t).Error; err != nil {
 		return nil, fmt.Errorf("SSRTypeRepo.FindByCode: %w", err)

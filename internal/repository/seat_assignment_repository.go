@@ -19,22 +19,22 @@ type SeatAssignmentRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type seatAssignmentRepository struct {
+type SeatAssignmentRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewSeatAssignmentRepository(db *gorm.DB) SeatAssignmentRepository {
-	return &seatAssignmentRepository{db: db}
+	return &SeatAssignmentRepositoryImpl{db: db}
 }
 
-func (r *seatAssignmentRepository) Create(ctx context.Context, a *models.SeatAssignment) error {
+func (r *SeatAssignmentRepositoryImpl) Create(ctx context.Context, a *models.SeatAssignment) error {
 	if err := r.db.WithContext(ctx).Create(a).Error; err != nil {
 		return fmt.Errorf("SeatAssignmentRepo.Create: %w", err)
 	}
 	return nil
 }
 
-func (r *seatAssignmentRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.SeatAssignment, error) {
+func (r *SeatAssignmentRepositoryImpl) FindByID(ctx context.Context, id uuid.UUID) (*models.SeatAssignment, error) {
 	var a models.SeatAssignment
 	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
@@ -47,7 +47,7 @@ func (r *seatAssignmentRepository) FindByID(ctx context.Context, id uuid.UUID) (
 	return &a, nil
 }
 
-func (r *seatAssignmentRepository) FindByPassengerID(ctx context.Context, passengerID uuid.UUID) (*models.SeatAssignment, error) {
+func (r *SeatAssignmentRepositoryImpl) FindByPassengerID(ctx context.Context, passengerID uuid.UUID) (*models.SeatAssignment, error) {
 	var a models.SeatAssignment
 	if err := r.db.WithContext(ctx).
 		Preload("FlightSeat").
@@ -60,7 +60,7 @@ func (r *seatAssignmentRepository) FindByPassengerID(ctx context.Context, passen
 	return &a, nil
 }
 
-func (r *seatAssignmentRepository) FindBySegmentID(ctx context.Context, segmentID uuid.UUID) ([]models.SeatAssignment, error) {
+func (r *SeatAssignmentRepositoryImpl) FindBySegmentID(ctx context.Context, segmentID uuid.UUID) ([]models.SeatAssignment, error) {
 	var assignments []models.SeatAssignment
 	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
@@ -73,7 +73,7 @@ func (r *seatAssignmentRepository) FindBySegmentID(ctx context.Context, segmentI
 	return assignments, nil
 }
 
-func (r *seatAssignmentRepository) FindByFlightSeatID(ctx context.Context, flightSeatID uuid.UUID) (*models.SeatAssignment, error) {
+func (r *SeatAssignmentRepositoryImpl) FindByFlightSeatID(ctx context.Context, flightSeatID uuid.UUID) (*models.SeatAssignment, error) {
 	var a models.SeatAssignment
 	if err := r.db.WithContext(ctx).
 		Where("flight_seat_id = ?", flightSeatID).
@@ -83,14 +83,14 @@ func (r *seatAssignmentRepository) FindByFlightSeatID(ctx context.Context, fligh
 	return &a, nil
 }
 
-func (r *seatAssignmentRepository) Update(ctx context.Context, a *models.SeatAssignment) error {
+func (r *SeatAssignmentRepositoryImpl) Update(ctx context.Context, a *models.SeatAssignment) error {
 	if err := r.db.WithContext(ctx).Save(a).Error; err != nil {
 		return fmt.Errorf("SeatAssignmentRepo.Update: %w", err)
 	}
 	return nil
 }
 
-func (r *seatAssignmentRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *SeatAssignmentRepositoryImpl) Delete(ctx context.Context, id uuid.UUID) error {
 	if err := r.db.WithContext(ctx).Delete(&models.SeatAssignment{}, "id = ?", id).Error; err != nil {
 		return fmt.Errorf("SeatAssignmentRepo.Delete: %w", err)
 	}

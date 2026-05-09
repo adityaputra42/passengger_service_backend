@@ -17,22 +17,22 @@ type TicketRepository interface {
 	FindWithSegments(ctx context.Context, id uuid.UUID) (*models.Ticket, error)
 }
 
-type ticketRepository struct {
+type TicketRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewTicketRepository(db *gorm.DB) TicketRepository {
-	return &ticketRepository{db: db}
+	return &TicketRepositoryImpl{db: db}
 }
 
-func (r *ticketRepository) Create(ctx context.Context, t *models.Ticket) error {
+func (r *TicketRepositoryImpl) Create(ctx context.Context, t *models.Ticket) error {
 	if err := r.db.WithContext(ctx).Create(t).Error; err != nil {
 		return fmt.Errorf("TicketRepo.Create: %w", err)
 	}
 	return nil
 }
 
-func (r *ticketRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Ticket, error) {
+func (r *TicketRepositoryImpl) FindByID(ctx context.Context, id uuid.UUID) (*models.Ticket, error) {
 	var t models.Ticket
 	if err := r.db.WithContext(ctx).First(&t, "id = ?", id).Error; err != nil {
 		return nil, fmt.Errorf("TicketRepo.FindByID: %w", err)
@@ -40,7 +40,7 @@ func (r *ticketRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.
 	return &t, nil
 }
 
-func (r *ticketRepository) FindByTicketNumber(ctx context.Context, number string) (*models.Ticket, error) {
+func (r *TicketRepositoryImpl) FindByTicketNumber(ctx context.Context, number string) (*models.Ticket, error) {
 	var t models.Ticket
 	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
@@ -57,7 +57,7 @@ func (r *ticketRepository) FindByTicketNumber(ctx context.Context, number string
 	return &t, nil
 }
 
-func (r *ticketRepository) FindByPassengerID(ctx context.Context, passengerID uuid.UUID) (*models.Ticket, error) {
+func (r *TicketRepositoryImpl) FindByPassengerID(ctx context.Context, passengerID uuid.UUID) (*models.Ticket, error) {
 	var t models.Ticket
 	if err := r.db.WithContext(ctx).
 		Preload("Segments").
@@ -68,7 +68,7 @@ func (r *ticketRepository) FindByPassengerID(ctx context.Context, passengerID uu
 	return &t, nil
 }
 
-func (r *ticketRepository) FindWithSegments(ctx context.Context, id uuid.UUID) (*models.Ticket, error) {
+func (r *TicketRepositoryImpl) FindWithSegments(ctx context.Context, id uuid.UUID) (*models.Ticket, error) {
 	var t models.Ticket
 	if err := r.db.WithContext(ctx).
 		Preload("Passenger").

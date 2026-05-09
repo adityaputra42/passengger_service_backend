@@ -19,22 +19,22 @@ type SeatLockRepository interface {
 	ReleaseByPNR(ctx context.Context, pnrID uuid.UUID) error
 }
 
-type seatLockRepository struct {
+type SeatLockRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewSeatLockRepository(db *gorm.DB) SeatLockRepository {
-	return &seatLockRepository{db: db}
+	return &SeatLockRepositoryImpl{db: db}
 }
 
-func (r *seatLockRepository) Create(ctx context.Context, lock *models.SeatLock) error {
+func (r *SeatLockRepositoryImpl) Create(ctx context.Context, lock *models.SeatLock) error {
 	if err := r.db.WithContext(ctx).Create(lock).Error; err != nil {
 		return fmt.Errorf("SeatLockRepo.Create: %w", err)
 	}
 	return nil
 }
 
-func (r *seatLockRepository) FindByFlightSeatID(ctx context.Context, flightSeatID uuid.UUID) (*models.SeatLock, error) {
+func (r *SeatLockRepositoryImpl) FindByFlightSeatID(ctx context.Context, flightSeatID uuid.UUID) (*models.SeatLock, error) {
 	var lock models.SeatLock
 	if err := r.db.WithContext(ctx).
 		Where("flight_seat_id = ? AND expires_at > ?", flightSeatID, time.Now()).
@@ -44,7 +44,7 @@ func (r *seatLockRepository) FindByFlightSeatID(ctx context.Context, flightSeatI
 	return &lock, nil
 }
 
-func (r *seatLockRepository) FindByPNRID(ctx context.Context, pnrID uuid.UUID) ([]models.SeatLock, error) {
+func (r *SeatLockRepositoryImpl) FindByPNRID(ctx context.Context, pnrID uuid.UUID) ([]models.SeatLock, error) {
 	var locks []models.SeatLock
 	if err := r.db.WithContext(ctx).
 		Where("pnr_id = ?", pnrID).
@@ -56,7 +56,7 @@ func (r *seatLockRepository) FindByPNRID(ctx context.Context, pnrID uuid.UUID) (
 
 // FindExpired returns all seat locks that have passed their TTL.
 // Used by a background job to release stale locks.
-func (r *seatLockRepository) FindExpired(ctx context.Context) ([]models.SeatLock, error) {
+func (r *SeatLockRepositoryImpl) FindExpired(ctx context.Context) ([]models.SeatLock, error) {
 	var locks []models.SeatLock
 	if err := r.db.WithContext(ctx).
 		Preload("FlightSeat").
@@ -67,14 +67,14 @@ func (r *seatLockRepository) FindExpired(ctx context.Context) ([]models.SeatLock
 	return locks, nil
 }
 
-func (r *seatLockRepository) Release(ctx context.Context, id uuid.UUID) error {
+func (r *SeatLockRepositoryImpl) Release(ctx context.Context, id uuid.UUID) error {
 	if err := r.db.WithContext(ctx).Delete(&models.SeatLock{}, "id = ?", id).Error; err != nil {
 		return fmt.Errorf("SeatLockRepo.Release: %w", err)
 	}
 	return nil
 }
 
-func (r *seatLockRepository) ReleaseByPNR(ctx context.Context, pnrID uuid.UUID) error {
+func (r *SeatLockRepositoryImpl) ReleaseByPNR(ctx context.Context, pnrID uuid.UUID) error {
 	if err := r.db.WithContext(ctx).
 		Where("pnr_id = ?", pnrID).
 		Delete(&models.SeatLock{}).Error; err != nil {

@@ -17,22 +17,22 @@ type PaymentRepository interface {
 	UpdateStatus(ctx context.Context, id uuid.UUID, status models.PaymentStatus) error
 }
 
-type paymentRepository struct {
+type PaymentRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewPaymentRepository(db *gorm.DB) PaymentRepository {
-	return &paymentRepository{db: db}
+	return &PaymentRepositoryImpl{db: db}
 }
 
-func (r *paymentRepository) Create(ctx context.Context, p *models.Payment) error {
+func (r *PaymentRepositoryImpl) Create(ctx context.Context, p *models.Payment) error {
 	if err := r.db.WithContext(ctx).Create(p).Error; err != nil {
 		return fmt.Errorf("PaymentRepo.Create: %w", err)
 	}
 	return nil
 }
 
-func (r *paymentRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Payment, error) {
+func (r *PaymentRepositoryImpl) FindByID(ctx context.Context, id uuid.UUID) (*models.Payment, error) {
 	var p models.Payment
 	if err := r.db.WithContext(ctx).First(&p, "id = ?", id).Error; err != nil {
 		return nil, fmt.Errorf("PaymentRepo.FindByID: %w", err)
@@ -40,7 +40,7 @@ func (r *paymentRepository) FindByID(ctx context.Context, id uuid.UUID) (*models
 	return &p, nil
 }
 
-func (r *paymentRepository) FindByPNRID(ctx context.Context, pnrID uuid.UUID) ([]models.Payment, error) {
+func (r *PaymentRepositoryImpl) FindByPNRID(ctx context.Context, pnrID uuid.UUID) ([]models.Payment, error) {
 	var payments []models.Payment
 	if err := r.db.WithContext(ctx).
 		Where("pnr_id = ?", pnrID).
@@ -51,7 +51,7 @@ func (r *paymentRepository) FindByPNRID(ctx context.Context, pnrID uuid.UUID) ([
 	return payments, nil
 }
 
-func (r *paymentRepository) FindByStatus(ctx context.Context, status models.PaymentStatus, page, limit int) ([]models.Payment, int64, error) {
+func (r *PaymentRepositoryImpl) FindByStatus(ctx context.Context, status models.PaymentStatus, page, limit int) ([]models.Payment, int64, error) {
 	var payments []models.Payment
 	var total int64
 
@@ -70,7 +70,7 @@ func (r *paymentRepository) FindByStatus(ctx context.Context, status models.Paym
 	return payments, total, nil
 }
 
-func (r *paymentRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status models.PaymentStatus) error {
+func (r *PaymentRepositoryImpl) UpdateStatus(ctx context.Context, id uuid.UUID, status models.PaymentStatus) error {
 	if err := r.db.WithContext(ctx).
 		Model(&models.Payment{}).
 		Where("id = ?", id).

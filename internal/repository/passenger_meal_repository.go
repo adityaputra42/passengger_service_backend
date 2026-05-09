@@ -15,22 +15,22 @@ type PassengerMealRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type passengerMealRepository struct {
+type PassengerMealRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewPassengerMealRepository(db *gorm.DB) PassengerMealRepository {
-	return &passengerMealRepository{db: db}
+	return &PassengerMealRepositoryImpl{db: db}
 }
 
-func (r *passengerMealRepository) Create(ctx context.Context, m *models.PassengerMeal) error {
+func (r *PassengerMealRepositoryImpl) Create(ctx context.Context, m *models.PassengerMeal) error {
 	if err := r.db.WithContext(ctx).Create(m).Error; err != nil {
 		return fmt.Errorf("PassengerMealRepo.Create: %w", err)
 	}
 	return nil
 }
 
-func (r *passengerMealRepository) FindByPassengerID(ctx context.Context, id uuid.UUID) ([]models.PassengerMeal, error) {
+func (r *PassengerMealRepositoryImpl) FindByPassengerID(ctx context.Context, id uuid.UUID) ([]models.PassengerMeal, error) {
 	var meals []models.PassengerMeal
 	if err := r.db.WithContext(ctx).Preload("Meal").Where("passenger_id = ?", id).Find(&meals).Error; err != nil {
 		return nil, fmt.Errorf("PassengerMealRepo.FindByPassengerID: %w", err)
@@ -38,6 +38,6 @@ func (r *passengerMealRepository) FindByPassengerID(ctx context.Context, id uuid
 	return meals, nil
 }
 
-func (r *passengerMealRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *PassengerMealRepositoryImpl) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&models.PassengerMeal{}, "id = ?", id).Error
 }

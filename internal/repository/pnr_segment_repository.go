@@ -17,22 +17,22 @@ type PNRSegmentRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type pnrSegmentRepository struct {
+type PNRSegmentRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewPNRSegmentRepository(db *gorm.DB) PNRSegmentRepository {
-	return &pnrSegmentRepository{db: db}
+	return &PNRSegmentRepositoryImpl{db: db}
 }
 
-func (r *pnrSegmentRepository) Create(ctx context.Context, s *models.PNRSegment) error {
+func (r *PNRSegmentRepositoryImpl) Create(ctx context.Context, s *models.PNRSegment) error {
 	if err := r.db.WithContext(ctx).Create(s).Error; err != nil {
 		return fmt.Errorf("PNRSegmentRepo.Create: %w", err)
 	}
 	return nil
 }
 
-func (r *pnrSegmentRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.PNRSegment, error) {
+func (r *PNRSegmentRepositoryImpl) FindByID(ctx context.Context, id uuid.UUID) (*models.PNRSegment, error) {
 	var s models.PNRSegment
 	if err := r.db.WithContext(ctx).First(&s, "id = ?", id).Error; err != nil {
 		return nil, fmt.Errorf("PNRSegmentRepo.FindByID: %w", err)
@@ -40,7 +40,7 @@ func (r *pnrSegmentRepository) FindByID(ctx context.Context, id uuid.UUID) (*mod
 	return &s, nil
 }
 
-func (r *pnrSegmentRepository) FindByPNRID(ctx context.Context, pnrID uuid.UUID) ([]models.PNRSegment, error) {
+func (r *PNRSegmentRepositoryImpl) FindByPNRID(ctx context.Context, pnrID uuid.UUID) ([]models.PNRSegment, error) {
 	var segments []models.PNRSegment
 	if err := r.db.WithContext(ctx).
 		Preload("Flight").
@@ -55,7 +55,7 @@ func (r *pnrSegmentRepository) FindByPNRID(ctx context.Context, pnrID uuid.UUID)
 	return segments, nil
 }
 
-func (r *pnrSegmentRepository) FindWithFlight(ctx context.Context, id uuid.UUID) (*models.PNRSegment, error) {
+func (r *PNRSegmentRepositoryImpl) FindWithFlight(ctx context.Context, id uuid.UUID) (*models.PNRSegment, error) {
 	var s models.PNRSegment
 	if err := r.db.WithContext(ctx).
 		Preload("Flight").
@@ -69,7 +69,7 @@ func (r *pnrSegmentRepository) FindWithFlight(ctx context.Context, id uuid.UUID)
 	return &s, nil
 }
 
-func (r *pnrSegmentRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *PNRSegmentRepositoryImpl) Delete(ctx context.Context, id uuid.UUID) error {
 	if err := r.db.WithContext(ctx).Delete(&models.PNRSegment{}, "id = ?", id).Error; err != nil {
 		return fmt.Errorf("PNRSegmentRepo.Delete: %w", err)
 	}

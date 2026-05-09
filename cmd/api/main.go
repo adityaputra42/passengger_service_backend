@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"passenger_service_backend/cmd/routes"
 	"passenger_service_backend/internal/config"
 	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/injection"
+	"syscall"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -25,38 +28,34 @@ func initLogger() *zap.Logger {
 		EncodeTime:   zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05"),
 		EncodeCaller: zapcore.ShortCallerEncoder,
 	}
-
 	core := zapcore.NewCore(
 		zapcore.NewConsoleEncoder(encoderConfig),
 		zapcore.AddSync(os.Stdout),
 		zapcore.DebugLevel,
 	)
-
-	logger := zap.New(
-		core,
-		zap.AddCaller(),
-		zap.AddCallerSkip(1),
-	)
-
-	return logger
+	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 }
-func main() {
 
+func main() {
 	logger := initLogger()
 	cfg := config.Load()
 
+	// ── Database ──────────────────────────────────────────────
 	if err := db.Connect(cfg); err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
-	logger.Info("✅ Database connected successfully")
+	logger.Info("✅ Database connected")
 
-	logger.Info("🌱 Running database seeders...")
 	if err := db.SeedDatabase(); err != nil {
 		logger.Fatal("Failed to seed database", zap.Error(err))
 	}
-	logger.Info("✅ Database seeded successfully")
+	logger.Info("✅ Database seeded")
 
-	handler := injection.InitializeAllHandler(cfg, context.Background())
+	handler, err := injection.InitializeAllHandler(cfg, context.Background())
+	if err != nil {
+		logger.Fatal("Failed to initialise dependencies", zap.Error(err))
+	}
+	logger.Info("✅ Dependencies wired")
 
 	router := routes.SetupRoutes(handler, logger, cfg.CORS)
 
@@ -64,13 +63,36 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	fmt.Printf("\n")
-	fmt.Printf("╔════════════════════════════════════════╗\n")
-	fmt.Printf("║  Server is running on port %-4s        ║\n", port)
-	fmt.Printf("╚════════════════════════════════════════╝\n")
-	fmt.Printf("\n")
-	if err := http.ListenAndServe(":"+port, router); err != nil {
-		logger.Fatal("Failed to start server", zap.Error(err))
+
+	srv := &http.Server{
+		Addr:         ":" + port,
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
+	fmt.Printf("\n╔════════════════════════════════════════╗\n")
+	fmt.Printf("║  Server running on port %-4s           ║\n", port)
+	fmt.Printf("╚════════════════════════════════════════╝\n\n")
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal("Server failed", zap.Error(err))
+		}
+	}()
+
+	<-quit
+	logger.Info("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Error("Forced shutdown", zap.Error(err))
+	}
+	logger.Info("Server stopped cleanly")
 }

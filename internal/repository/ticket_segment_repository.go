@@ -15,22 +15,22 @@ type TicketSegmentRepository interface {
 	FindByTicketID(ctx context.Context, ticketID uuid.UUID) ([]models.TicketSegment, error)
 }
 
-type ticketSegmentRepository struct {
+type TicketSegmentRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewTicketSegmentRepository(db *gorm.DB) TicketSegmentRepository {
-	return &ticketSegmentRepository{db: db}
+	return &TicketSegmentRepositoryImpl{db: db}
 }
 
-func (r *ticketSegmentRepository) Create(ctx context.Context, ts *models.TicketSegment) error {
+func (r *TicketSegmentRepositoryImpl) Create(ctx context.Context, ts *models.TicketSegment) error {
 	if err := r.db.WithContext(ctx).Create(ts).Error; err != nil {
 		return fmt.Errorf("TicketSegmentRepo.Create: %w", err)
 	}
 	return nil
 }
 
-func (r *ticketSegmentRepository) BulkCreate(ctx context.Context, segments []models.TicketSegment) error {
+func (r *TicketSegmentRepositoryImpl) BulkCreate(ctx context.Context, segments []models.TicketSegment) error {
 	if len(segments) == 0 {
 		return nil
 	}
@@ -40,7 +40,7 @@ func (r *ticketSegmentRepository) BulkCreate(ctx context.Context, segments []mod
 	return nil
 }
 
-func (r *ticketSegmentRepository) FindByTicketID(ctx context.Context, ticketID uuid.UUID) ([]models.TicketSegment, error) {
+func (r *TicketSegmentRepositoryImpl) FindByTicketID(ctx context.Context, ticketID uuid.UUID) ([]models.TicketSegment, error) {
 	var segments []models.TicketSegment
 	if err := r.db.WithContext(ctx).
 		Preload("Segment").

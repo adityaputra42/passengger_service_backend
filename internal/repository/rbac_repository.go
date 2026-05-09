@@ -17,7 +17,7 @@ type RBACRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func NewRBACRepository(db *gorm.DB) RBACRepository {
+func NewRBACRepository(db *gorm.DB) *RBACRepositoryImpl {
 	return &RBACRepositoryImpl{db: db}
 }
 func (r *RBACRepositoryImpl) GetUserRole(uid uuid.UUID) (*models.Role, error) {

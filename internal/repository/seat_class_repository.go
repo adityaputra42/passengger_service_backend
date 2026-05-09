@@ -20,15 +20,15 @@ type SeatClassRepository interface {
 // Implementation
 // ─────────────────────────────────────────────
 
-type seatClassRepository struct {
+type SeatClassRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewSeatClassRepository(db *gorm.DB) SeatClassRepository {
-	return &seatClassRepository{db: db}
+	return &SeatClassRepositoryImpl{db: db}
 }
 
-func (r *seatClassRepository) FindAll(ctx context.Context) ([]models.SeatClass, error) {
+func (r *SeatClassRepositoryImpl) FindAll(ctx context.Context) ([]models.SeatClass, error) {
 	var classes []models.SeatClass
 	if err := r.db.WithContext(ctx).Order("code").Find(&classes).Error; err != nil {
 		return nil, fmt.Errorf("SeatClassRepo.FindAll: %w", err)
@@ -36,7 +36,7 @@ func (r *seatClassRepository) FindAll(ctx context.Context) ([]models.SeatClass, 
 	return classes, nil
 }
 
-func (r *seatClassRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.SeatClass, error) {
+func (r *SeatClassRepositoryImpl) FindByID(ctx context.Context, id uuid.UUID) (*models.SeatClass, error) {
 	var sc models.SeatClass
 	if err := r.db.WithContext(ctx).First(&sc, "id = ?", id).Error; err != nil {
 		return nil, fmt.Errorf("SeatClassRepo.FindByID: %w", err)
@@ -44,7 +44,7 @@ func (r *seatClassRepository) FindByID(ctx context.Context, id uuid.UUID) (*mode
 	return &sc, nil
 }
 
-func (r *seatClassRepository) FindByCode(ctx context.Context, tx *gorm.DB, code string) (*models.SeatClass, error) {
+func (r *SeatClassRepositoryImpl) FindByCode(ctx context.Context, tx *gorm.DB, code string) (*models.SeatClass, error) {
 	var sc models.SeatClass
 	database := db.DB
 

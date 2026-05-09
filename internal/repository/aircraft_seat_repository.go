@@ -18,15 +18,15 @@ type AircraftSeatRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type aircraftSeatRepository struct {
+type AircraftSeatRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewAircraftSeatRepository(db *gorm.DB) AircraftSeatRepository {
-	return &aircraftSeatRepository{db: db}
+	return &AircraftSeatRepositoryImpl{db: db}
 }
 
-func (r *aircraftSeatRepository) BulkCreate(ctx context.Context, tx *gorm.DB, seats []models.AircraftSeat) error {
+func (r *AircraftSeatRepositoryImpl) BulkCreate(ctx context.Context, tx *gorm.DB, seats []models.AircraftSeat) error {
 	if len(seats) == 0 {
 		return nil
 	}
@@ -42,7 +42,7 @@ func (r *aircraftSeatRepository) BulkCreate(ctx context.Context, tx *gorm.DB, se
 	return nil
 }
 
-func (r *aircraftSeatRepository) FindByAircraftID(ctx context.Context, aircraftID uuid.UUID) ([]models.AircraftSeat, error) {
+func (r *AircraftSeatRepositoryImpl) FindByAircraftID(ctx context.Context, aircraftID uuid.UUID) ([]models.AircraftSeat, error) {
 	var seats []models.AircraftSeat
 	if err := r.db.WithContext(ctx).
 		Preload("SeatClass").
@@ -54,7 +54,7 @@ func (r *aircraftSeatRepository) FindByAircraftID(ctx context.Context, aircraftI
 	return seats, nil
 }
 
-func (r *aircraftSeatRepository) FindByAircraftAndClass(ctx context.Context, aircraftID uuid.UUID, classCode string) ([]models.AircraftSeat, error) {
+func (r *AircraftSeatRepositoryImpl) FindByAircraftAndClass(ctx context.Context, aircraftID uuid.UUID, classCode string) ([]models.AircraftSeat, error) {
 	var seats []models.AircraftSeat
 	if err := r.db.WithContext(ctx).
 		Joins("JOIN seat_classes ON seat_classes.id = aircraft_seats.seat_class_id").
@@ -66,7 +66,7 @@ func (r *aircraftSeatRepository) FindByAircraftAndClass(ctx context.Context, air
 	return seats, nil
 }
 
-func (r *aircraftSeatRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.AircraftSeat, error) {
+func (r *AircraftSeatRepositoryImpl) FindByID(ctx context.Context, id uuid.UUID) (*models.AircraftSeat, error) {
 	var seat models.AircraftSeat
 	if err := r.db.WithContext(ctx).
 		Preload("SeatClass").
@@ -76,14 +76,14 @@ func (r *aircraftSeatRepository) FindByID(ctx context.Context, id uuid.UUID) (*m
 	return &seat, nil
 }
 
-func (r *aircraftSeatRepository) Update(ctx context.Context, seat *models.AircraftSeat) error {
+func (r *AircraftSeatRepositoryImpl) Update(ctx context.Context, seat *models.AircraftSeat) error {
 	if err := r.db.WithContext(ctx).Save(seat).Error; err != nil {
 		return fmt.Errorf("AircraftSeatRepo.Update: %w", err)
 	}
 	return nil
 }
 
-func (r *aircraftSeatRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *AircraftSeatRepositoryImpl) Delete(ctx context.Context, id uuid.UUID) error {
 	if err := r.db.WithContext(ctx).Delete(&models.AircraftSeat{}, "id = ?", id).Error; err != nil {
 		return fmt.Errorf("AircraftSeatRepo.Delete: %w", err)
 	}

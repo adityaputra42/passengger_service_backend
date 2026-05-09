@@ -3,8 +3,16 @@
 
 package injection
 
+// ─────────────────────────────────────────────────────────────
+// This file shows the CHANGES needed to wire.go.
+// It is NOT a complete replacement — merge with your existing wire.go.
+// ─────────────────────────────────────────────────────────────
+//
+// STEP 1: Add ProvideCache and ProvideRedisConfig to wire.go
+
 import (
 	"context"
+	"passenger_service_backend/internal/cache"
 	"passenger_service_backend/internal/config"
 	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/handler"
@@ -16,20 +24,27 @@ import (
 	"gorm.io/gorm"
 )
 
-// ProvideDB provides database connection
 func ProvideDB() *gorm.DB {
 	return db.DB
 }
 
-// ProvideJWTService provides JWT service instance with config
-func ProvideJWTService(config *config.Config) *utils.JWTService {
-	return utils.NewJWTService(config)
+func ProvideJWTService(cfg *config.Config) *utils.JWTService {
+	return utils.NewJWTService(cfg)
 }
 
-// Repository Providers
+func ProvideCache(cfg *config.Config) (*cache.Client, error) {
+	return cache.New(cache.Config{
+		Host:     cfg.Redis.Host,
+		Port:     cfg.Redis.Port,
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
+	})
+}
+
 var repositorySet = wire.NewSet(
 	ProvideDB,
 
+	// ── Base repos ──
 	repository.NewAircraftRepository,
 	repository.NewAirportRepository,
 	repository.NewAircraftSeatRepository,
@@ -57,9 +72,31 @@ var repositorySet = wire.NewSet(
 	repository.NewSSRTypeRepository,
 	repository.NewTicketRepository,
 	repository.NewTicketSegmentRepository,
+
+	// ── Cached wrappers ──
+	repository.NewCachedAircraftRepository,
+	repository.NewCachedAirportRepository,
+	repository.NewCachedRBACRepository,
+	repository.NewCachedFlightRepository,
+	repository.NewCachedFlightSeatRepository,
+	repository.NewCachedFlightScheduleRepository,
+	repository.NewCachedPNRRepository,
+
+	// ── Bind HANYA untuk repo yang punya cached wrapper ──
+	wire.Bind(new(repository.AircraftRepository), new(*repository.CachedAircraftRepository)),
+	wire.Bind(new(repository.AirportRepository), new(*repository.CachedAirportRepository)),
+	wire.Bind(new(repository.RBACRepository), new(*repository.CachedRBACRepository)),
+	wire.Bind(new(repository.FlightRepository), new(*repository.CachedFlightRepository)),
+	wire.Bind(new(repository.FlightSeatRepository), new(*repository.CachedFlightSeatRepository)),
+	wire.Bind(new(repository.FlightScheduleRepository), new(*repository.CachedFlightScheduleRepository)),
+	wire.Bind(new(repository.PNRRepository), new(*repository.CachedPNRRepository)),
 )
 
-// Service Providers
+var utilsSet = wire.NewSet(
+	ProvideJWTService,
+	ProvideCache, // ← ADD THIS
+)
+
 var serviceSet = wire.NewSet(
 	services.NewAircraftService,
 	services.NewAirportService,
@@ -78,12 +115,6 @@ var serviceSet = wire.NewSet(
 	services.NewUserService,
 )
 
-// Utils Providers
-var utilsSet = wire.NewSet(
-	ProvideJWTService,
-)
-
-// Handler Providers
 var handlerSet = wire.NewSet(
 	handler.NewAircraftHandler,
 	handler.NewAirportHandler,
@@ -99,8 +130,7 @@ var handlerSet = wire.NewSet(
 	handler.NewRoleHandler,
 )
 
-// InitializeAllHandler initializes all handler with config
-func InitializeAllHandler(config *config.Config, ctx context.Context) *Handler {
+func InitializeAllHandler(cfg *config.Config, ctx context.Context) (*Handler, error) {
 	wire.Build(
 		repositorySet,
 		serviceSet,
@@ -108,10 +138,9 @@ func InitializeAllHandler(config *config.Config, ctx context.Context) *Handler {
 		handlerSet,
 		NewHandler,
 	)
-	return &Handler{}
+	return &Handler{}, nil
 }
 
-// Handler struct contains all handler and services
 type Handler struct {
 	AircraftHandler       *handler.AircraftHandler
 	AirportHandler        *handler.AirportHandler
@@ -131,7 +160,6 @@ type Handler struct {
 	JWTService  *utils.JWTService
 }
 
-// NewHandler creates new Handler instance
 func NewHandler(
 	aircraftHandler *handler.AircraftHandler,
 	airportHandler *handler.AirportHandler,

@@ -23,22 +23,22 @@ type FlightRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type flightRepository struct {
+type FlightRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func NewFlightRepository(db *gorm.DB) FlightRepository {
-	return &flightRepository{db: db}
+func NewFlightRepository(db *gorm.DB) *FlightRepositoryImpl {
+	return &FlightRepositoryImpl{db: db}
 }
 
-func (r *flightRepository) Create(ctx context.Context, f *models.Flight) error {
+func (r *FlightRepositoryImpl) Create(ctx context.Context, f *models.Flight) error {
 	if err := r.db.WithContext(ctx).Create(f).Error; err != nil {
 		return fmt.Errorf("FlightRepo.Create: %w", err)
 	}
 	return nil
 }
 
-func (r *flightRepository) BulkCreate(ctx context.Context, flights []models.Flight) error {
+func (r *FlightRepositoryImpl) BulkCreate(ctx context.Context, flights []models.Flight) error {
 	if len(flights) == 0 {
 		return nil
 	}
@@ -48,7 +48,7 @@ func (r *flightRepository) BulkCreate(ctx context.Context, flights []models.Flig
 	return nil
 }
 
-func (r *flightRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Flight, error) {
+func (r *FlightRepositoryImpl) FindByID(ctx context.Context, id uuid.UUID) (*models.Flight, error) {
 	var f models.Flight
 	if err := r.db.WithContext(ctx).First(&f, "id = ?", id).Error; err != nil {
 		return nil, fmt.Errorf("FlightRepo.FindByID: %w", err)
@@ -58,7 +58,7 @@ func (r *flightRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.
 
 // FindAvailable searches flights by route and date with available seats.
 // Joins through schedule to get departure/arrival airport.
-func (r *flightRepository) FindAvailable(ctx context.Context, depAirportID, arrAirportID uuid.UUID, date time.Time) ([]models.Flight, error) {
+func (r *FlightRepositoryImpl) FindAvailable(ctx context.Context, depAirportID, arrAirportID uuid.UUID, date time.Time) ([]models.Flight, error) {
 	var flights []models.Flight
 
 	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
@@ -86,7 +86,7 @@ func (r *flightRepository) FindAvailable(ctx context.Context, depAirportID, arrA
 	return flights, nil
 }
 
-func (r *flightRepository) FindBySchedule(ctx context.Context, scheduleID uuid.UUID) ([]models.Flight, error) {
+func (r *FlightRepositoryImpl) FindBySchedule(ctx context.Context, scheduleID uuid.UUID) ([]models.Flight, error) {
 	var flights []models.Flight
 	if err := r.db.WithContext(ctx).
 		Where("schedule_id = ?", scheduleID).
@@ -97,7 +97,7 @@ func (r *flightRepository) FindBySchedule(ctx context.Context, scheduleID uuid.U
 	return flights, nil
 }
 
-func (r *flightRepository) FindByStatus(ctx context.Context, status models.FlightStatus) ([]models.Flight, error) {
+func (r *FlightRepositoryImpl) FindByStatus(ctx context.Context, status models.FlightStatus) ([]models.Flight, error) {
 	var flights []models.Flight
 	if err := r.db.WithContext(ctx).
 		Preload("Schedule").
@@ -111,7 +111,7 @@ func (r *flightRepository) FindByStatus(ctx context.Context, status models.Fligh
 }
 
 // FindWithDetails loads full flight info: schedule, airports, aircraft, seat summary.
-func (r *flightRepository) FindWithDetails(ctx context.Context, id uuid.UUID) (*models.Flight, error) {
+func (r *FlightRepositoryImpl) FindWithDetails(ctx context.Context, id uuid.UUID) (*models.Flight, error) {
 	var f models.Flight
 	if err := r.db.WithContext(ctx).
 		Preload("Schedule").
@@ -124,7 +124,7 @@ func (r *flightRepository) FindWithDetails(ctx context.Context, id uuid.UUID) (*
 	return &f, nil
 }
 
-func (r *flightRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status models.FlightStatus) error {
+func (r *FlightRepositoryImpl) UpdateStatus(ctx context.Context, id uuid.UUID, status models.FlightStatus) error {
 	if err := r.db.WithContext(ctx).
 		Model(&models.Flight{}).
 		Where("id = ?", id).
@@ -134,14 +134,14 @@ func (r *flightRepository) UpdateStatus(ctx context.Context, id uuid.UUID, statu
 	return nil
 }
 
-func (r *flightRepository) Update(ctx context.Context, f *models.Flight) error {
+func (r *FlightRepositoryImpl) Update(ctx context.Context, f *models.Flight) error {
 	if err := r.db.WithContext(ctx).Save(f).Error; err != nil {
 		return fmt.Errorf("FlightRepo.Update: %w", err)
 	}
 	return nil
 }
 
-func (r *flightRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *FlightRepositoryImpl) Delete(ctx context.Context, id uuid.UUID) error {
 	if err := r.db.WithContext(ctx).Delete(&models.Flight{}, "id = ?", id).Error; err != nil {
 		return fmt.Errorf("FlightRepo.Delete: %w", err)
 	}

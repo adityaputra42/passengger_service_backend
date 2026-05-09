@@ -17,22 +17,22 @@ type CheckinRepository interface {
 	IsCheckedIn(ctx context.Context, passengerID, segmentID uuid.UUID) (bool, error)
 }
 
-type checkinRepository struct {
+type CheckinRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewCheckinRepository(db *gorm.DB) CheckinRepository {
-	return &checkinRepository{db: db}
+	return &CheckinRepositoryImpl{db: db}
 }
 
-func (r *checkinRepository) Create(ctx context.Context, c *models.Checkin) error {
+func (r *CheckinRepositoryImpl) Create(ctx context.Context, c *models.Checkin) error {
 	if err := r.db.WithContext(ctx).Create(c).Error; err != nil {
 		return fmt.Errorf("CheckinRepo.Create: %w", err)
 	}
 	return nil
 }
 
-func (r *checkinRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Checkin, error) {
+func (r *CheckinRepositoryImpl) FindByID(ctx context.Context, id uuid.UUID) (*models.Checkin, error) {
 	var c models.Checkin
 	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
@@ -43,7 +43,7 @@ func (r *checkinRepository) FindByID(ctx context.Context, id uuid.UUID) (*models
 	return &c, nil
 }
 
-func (r *checkinRepository) FindByPassengerID(ctx context.Context, passengerID uuid.UUID) ([]models.Checkin, error) {
+func (r *CheckinRepositoryImpl) FindByPassengerID(ctx context.Context, passengerID uuid.UUID) ([]models.Checkin, error) {
 	var checkins []models.Checkin
 	if err := r.db.WithContext(ctx).
 		Preload("Segment").
@@ -55,7 +55,7 @@ func (r *checkinRepository) FindByPassengerID(ctx context.Context, passengerID u
 	return checkins, nil
 }
 
-func (r *checkinRepository) FindBySegmentID(ctx context.Context, segmentID uuid.UUID) ([]models.Checkin, error) {
+func (r *CheckinRepositoryImpl) FindBySegmentID(ctx context.Context, segmentID uuid.UUID) ([]models.Checkin, error) {
 	var checkins []models.Checkin
 	if err := r.db.WithContext(ctx).
 		Preload("Passenger").
@@ -66,7 +66,7 @@ func (r *checkinRepository) FindBySegmentID(ctx context.Context, segmentID uuid.
 	return checkins, nil
 }
 
-func (r *checkinRepository) IsCheckedIn(ctx context.Context, passengerID, segmentID uuid.UUID) (bool, error) {
+func (r *CheckinRepositoryImpl) IsCheckedIn(ctx context.Context, passengerID, segmentID uuid.UUID) (bool, error) {
 	var count int64
 	if err := r.db.WithContext(ctx).
 		Model(&models.Checkin{}).

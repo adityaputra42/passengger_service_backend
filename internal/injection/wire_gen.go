@@ -10,6 +10,7 @@ import (
 	"context"
 	"github.com/google/wire"
 	"gorm.io/gorm"
+	"passenger_service_backend/internal/cache"
 	"passenger_service_backend/internal/config"
 	"passenger_service_backend/internal/db"
 	"passenger_service_backend/internal/handler"
@@ -20,20 +21,25 @@ import (
 
 // Injectors from wire.go:
 
-// InitializeAllHandler initializes all handler with config
-func InitializeAllHandler(config2 *config.Config, ctx context.Context) *Handler {
+func InitializeAllHandler(cfg *config.Config, ctx context.Context) (*Handler, error) {
 	db := ProvideDB()
-	aircraftRepository := repository.NewAircraftRepository(db)
+	aircraftRepositoryImpl := repository.NewAircraftRepository(db)
+	client, err := ProvideCache(cfg)
+	if err != nil {
+		return nil, err
+	}
+	cachedAircraftRepository := repository.NewCachedAircraftRepository(aircraftRepositoryImpl, client)
 	aircraftSeatRepository := repository.NewAircraftSeatRepository(db)
 	seatClassRepository := repository.NewSeatClassRepository(db)
-	aircraftService := services.NewAircraftService(aircraftRepository, aircraftSeatRepository, seatClassRepository)
+	aircraftService := services.NewAircraftService(cachedAircraftRepository, aircraftSeatRepository, seatClassRepository)
 	aircraftHandler := handler.NewAircraftHandler(aircraftService)
-	airportRepository := repository.NewAirportRepository(db)
-	airportService := services.NewAirportService(airportRepository)
+	airportRepositoryImpl := repository.NewAirportRepository(db)
+	cachedAirportRepository := repository.NewCachedAirportRepository(airportRepositoryImpl, client)
+	airportService := services.NewAirportService(cachedAirportRepository)
 	airportHandler := handler.NewAirportHandler(airportService)
 	userRepository := repository.NewUserReposiory(db)
 	roleRepository := repository.NewRoleRepository(db)
-	jwtService := ProvideJWTService(config2)
+	jwtService := ProvideJWTService(cfg)
 	authService := services.NewAuthService(userRepository, roleRepository, jwtService)
 	authHandler := handler.NewAuthHandler(authService, ctx)
 	baggageRepository := repository.NewBaggageRepository(db)
@@ -46,70 +52,78 @@ func InitializeAllHandler(config2 *config.Config, ctx context.Context) *Handler 
 	seatAssignmentRepository := repository.NewSeatAssignmentRepository(db)
 	boardingPassService := services.NewBoardingPassService(boardingPassRepository, checkinRepository, pnrPassengerRepository, pnrSegmentRepository, seatAssignmentRepository)
 	boardingPassHandler := handler.NewBoardingPassHandler(boardingPassService)
-	pnrRepository := repository.NewPNRRepository(db)
+	pnrRepositoryImpl := repository.NewPNRRepository(db)
+	cachedPNRRepository := repository.NewCachedPNRRepository(pnrRepositoryImpl, client)
 	pnrContactRepository := repository.NewPNRContactRepository(db)
-	flightRepository := repository.NewFlightRepository(db)
-	flightSeatRepository := repository.NewFlightSeatRepository(db)
+	flightRepositoryImpl := repository.NewFlightRepository(db)
+	cachedFlightRepository := repository.NewCachedFlightRepository(flightRepositoryImpl, client)
+	flightSeatRepositoryImpl := repository.NewFlightSeatRepository(db)
+	cachedFlightSeatRepository := repository.NewCachedFlightSeatRepository(flightSeatRepositoryImpl, client)
 	seatLockRepository := repository.NewSeatLockRepository(db)
 	ssrTypeRepository := repository.NewSSRTypeRepository(db)
 	passengerSSRRepository := repository.NewPassengerSSRRepository(db)
 	mealRepository := repository.NewMealRepository(db)
 	passengerMealRepository := repository.NewPassengerMealRepository(db)
-	bookingService := services.NewBookingService(db, pnrRepository, pnrContactRepository, pnrPassengerRepository, pnrSegmentRepository, flightRepository, flightSeatRepository, seatLockRepository, seatAssignmentRepository, ssrTypeRepository, passengerSSRRepository, mealRepository, passengerMealRepository)
+	bookingService := services.NewBookingService(db, cachedPNRRepository, pnrContactRepository, pnrPassengerRepository, pnrSegmentRepository, cachedFlightRepository, cachedFlightSeatRepository, seatLockRepository, seatAssignmentRepository, ssrTypeRepository, passengerSSRRepository, mealRepository, passengerMealRepository)
 	bookingHandler := handler.NewBookingHandler(bookingService)
 	ticketRepository := repository.NewTicketRepository(db)
-	checkinService := services.NewCheckinService(checkinRepository, pnrPassengerRepository, pnrSegmentRepository, ticketRepository, flightRepository, seatAssignmentRepository)
+	checkinService := services.NewCheckinService(checkinRepository, pnrPassengerRepository, pnrSegmentRepository, ticketRepository, cachedFlightRepository, seatAssignmentRepository)
 	checkinHandler := handler.NewCheckinHandler(checkinService)
-	flightScheduleRepository := repository.NewFlightScheduleRepository(db)
-	flightService := services.NewFlightService(flightRepository, flightSeatRepository, flightScheduleRepository, airportRepository, aircraftRepository, aircraftSeatRepository)
+	flightScheduleRepositoryImpl := repository.NewFlightScheduleRepository(db)
+	cachedFlightScheduleRepository := repository.NewCachedFlightScheduleRepository(flightScheduleRepositoryImpl, client)
+	flightService := services.NewFlightService(cachedFlightRepository, cachedFlightSeatRepository, cachedFlightScheduleRepository, cachedAirportRepository, cachedAircraftRepository, aircraftSeatRepository)
 	flightHandler := handler.NewFlightHandler(flightService)
-	flightScheduleService := services.NewFlightScheduleService(flightScheduleRepository, airportRepository)
+	flightScheduleService := services.NewFlightScheduleService(cachedFlightScheduleRepository, cachedAirportRepository)
 	flightScheduleHandler := handler.NewFlightScheduleHandler(flightScheduleService)
 	paymentRepository := repository.NewPaymentRepository(db)
 	ticketSegmentRepository := repository.NewTicketSegmentRepository(db)
-	ticketService := services.NewTicketService(ticketRepository, ticketSegmentRepository, pnrRepository, pnrPassengerRepository, pnrSegmentRepository, flightSeatRepository)
-	paymentService := services.NewPaymentService(paymentRepository, pnrRepository, flightSeatRepository, ticketService)
+	ticketService := services.NewTicketService(ticketRepository, ticketSegmentRepository, cachedPNRRepository, pnrPassengerRepository, pnrSegmentRepository, cachedFlightSeatRepository)
+	paymentService := services.NewPaymentService(paymentRepository, cachedPNRRepository, cachedFlightSeatRepository, ticketService)
 	paymentHandler := handler.NewPaymentHandler(paymentService)
 	permissionRepository := repository.NewPermissionRepository(db)
 	roleService := services.NewRoleService(roleRepository, permissionRepository)
 	roleHandler := handler.NewRoleHandler(roleService)
 	userService := services.NewUserService(userRepository, roleRepository)
 	userHandler := handler.NewUserHandler(userService)
-	rbacRepository := repository.NewRBACRepository(db)
-	rbacService := services.NewRBACService(rbacRepository)
+	rbacRepositoryImpl := repository.NewRBACRepository(db)
+	cachedRBACRepository := repository.NewCachedRBACRepository(rbacRepositoryImpl, client)
+	rbacService := services.NewRBACService(cachedRBACRepository)
 	injectionHandler := NewHandler(aircraftHandler, airportHandler, authHandler, baggageHandler, boardingPassHandler, bookingHandler, checkinHandler, flightHandler, flightScheduleHandler, paymentHandler, roleHandler, userHandler, rbacService, userService, jwtService)
-	return injectionHandler
+	return injectionHandler, nil
 }
 
 // wire.go:
 
-// ProvideDB provides database connection
 func ProvideDB() *gorm.DB {
 	return db.DB
 }
 
-// ProvideJWTService provides JWT service instance with config
-func ProvideJWTService(config2 *config.Config) *utils.JWTService {
-	return utils.NewJWTService(config2)
+func ProvideJWTService(cfg *config.Config) *utils.JWTService {
+	return utils.NewJWTService(cfg)
 }
 
-// Repository Providers
+func ProvideCache(cfg *config.Config) (*cache.Client, error) {
+	return cache.New(cache.Config{
+		Host:     cfg.Redis.Host,
+		Port:     cfg.Redis.Port,
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
+	})
+}
+
 var repositorySet = wire.NewSet(
-	ProvideDB, repository.NewAircraftRepository, repository.NewAirportRepository, repository.NewAircraftSeatRepository, repository.NewBaggageRepository, repository.NewBoardingPassRepository, repository.NewCheckinRepository, repository.NewPaymentRepository, repository.NewPermissionRepository, repository.NewRBACRepository, repository.NewFlightRepository, repository.NewFlightSeatRepository, repository.NewFlightScheduleRepository, repository.NewMealRepository, repository.NewUserReposiory, repository.NewPassengerMealRepository, repository.NewPassengerSSRRepository, repository.NewRoleRepository, repository.NewPNRContactRepository, repository.NewPNRPassengerRepository, repository.NewPNRRepository, repository.NewPNRSegmentRepository, repository.NewSeatAssignmentRepository, repository.NewSeatClassRepository, repository.NewSeatLockRepository, repository.NewSSRTypeRepository, repository.NewTicketRepository, repository.NewTicketSegmentRepository,
+	ProvideDB, repository.NewAircraftRepository, repository.NewAirportRepository, repository.NewAircraftSeatRepository, repository.NewBaggageRepository, repository.NewBoardingPassRepository, repository.NewCheckinRepository, repository.NewPaymentRepository, repository.NewPermissionRepository, repository.NewRBACRepository, repository.NewFlightRepository, repository.NewFlightSeatRepository, repository.NewFlightScheduleRepository, repository.NewMealRepository, repository.NewUserReposiory, repository.NewPassengerMealRepository, repository.NewPassengerSSRRepository, repository.NewRoleRepository, repository.NewPNRContactRepository, repository.NewPNRPassengerRepository, repository.NewPNRRepository, repository.NewPNRSegmentRepository, repository.NewSeatAssignmentRepository, repository.NewSeatClassRepository, repository.NewSeatLockRepository, repository.NewSSRTypeRepository, repository.NewTicketRepository, repository.NewTicketSegmentRepository, repository.NewCachedAircraftRepository, repository.NewCachedAirportRepository, repository.NewCachedRBACRepository, repository.NewCachedFlightRepository, repository.NewCachedFlightSeatRepository, repository.NewCachedFlightScheduleRepository, repository.NewCachedPNRRepository, wire.Bind(new(repository.AircraftRepository), new(*repository.CachedAircraftRepository)), wire.Bind(new(repository.AirportRepository), new(*repository.CachedAirportRepository)), wire.Bind(new(repository.RBACRepository), new(*repository.CachedRBACRepository)), wire.Bind(new(repository.FlightRepository), new(*repository.CachedFlightRepository)), wire.Bind(new(repository.FlightSeatRepository), new(*repository.CachedFlightSeatRepository)), wire.Bind(new(repository.FlightScheduleRepository), new(*repository.CachedFlightScheduleRepository)), wire.Bind(new(repository.PNRRepository), new(*repository.CachedPNRRepository)),
 )
 
-// Service Providers
-var serviceSet = wire.NewSet(services.NewAircraftService, services.NewAirportService, services.NewAuthService, services.NewBaggageService, services.NewBoardingPassService, services.NewBookingService, services.NewCheckinService, services.NewFlightScheduleService, services.NewFlightService, services.NewPaymentService, services.NewRBACService, services.NewRoleService, services.NewSeatLockService, services.NewTicketService, services.NewUserService)
-
-// Utils Providers
 var utilsSet = wire.NewSet(
 	ProvideJWTService,
+	ProvideCache,
 )
 
-// Handler Providers
+var serviceSet = wire.NewSet(services.NewAircraftService, services.NewAirportService, services.NewAuthService, services.NewBaggageService, services.NewBoardingPassService, services.NewBookingService, services.NewCheckinService, services.NewFlightScheduleService, services.NewFlightService, services.NewPaymentService, services.NewRBACService, services.NewRoleService, services.NewSeatLockService, services.NewTicketService, services.NewUserService)
+
 var handlerSet = wire.NewSet(handler.NewAircraftHandler, handler.NewAirportHandler, handler.NewAuthHandler, handler.NewBaggageHandler, handler.NewBoardingPassHandler, handler.NewBookingHandler, handler.NewCheckinHandler, handler.NewFlightHandler, handler.NewFlightScheduleHandler, handler.NewPaymentHandler, handler.NewUserHandler, handler.NewRoleHandler)
 
-// Handler struct contains all handler and services
 type Handler struct {
 	AircraftHandler       *handler.AircraftHandler
 	AirportHandler        *handler.AirportHandler
@@ -129,7 +143,6 @@ type Handler struct {
 	JWTService  *utils.JWTService
 }
 
-// NewHandler creates new Handler instance
 func NewHandler(
 	aircraftHandler *handler.AircraftHandler,
 	airportHandler *handler.AirportHandler,

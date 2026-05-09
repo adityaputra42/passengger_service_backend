@@ -15,22 +15,22 @@ type PNRContactRepository interface {
 	Update(ctx context.Context, contact *models.PNRContact) error
 }
 
-type pnrContactRepository struct {
+type PNRContactRepositoryImpl struct {
 	db *gorm.DB
 }
 
 func NewPNRContactRepository(db *gorm.DB) PNRContactRepository {
-	return &pnrContactRepository{db: db}
+	return &PNRContactRepositoryImpl{db: db}
 }
 
-func (r *pnrContactRepository) Create(ctx context.Context, contact *models.PNRContact) error {
+func (r *PNRContactRepositoryImpl) Create(ctx context.Context, contact *models.PNRContact) error {
 	if err := r.db.WithContext(ctx).Create(contact).Error; err != nil {
 		return fmt.Errorf("PNRContactRepo.Create: %w", err)
 	}
 	return nil
 }
 
-func (r *pnrContactRepository) FindByPNRID(ctx context.Context, pnrID uuid.UUID) (*models.PNRContact, error) {
+func (r *PNRContactRepositoryImpl) FindByPNRID(ctx context.Context, pnrID uuid.UUID) (*models.PNRContact, error) {
 	var contact models.PNRContact
 	if err := r.db.WithContext(ctx).
 		Where("pnr_id = ?", pnrID).
@@ -40,7 +40,7 @@ func (r *pnrContactRepository) FindByPNRID(ctx context.Context, pnrID uuid.UUID)
 	return &contact, nil
 }
 
-func (r *pnrContactRepository) Update(ctx context.Context, contact *models.PNRContact) error {
+func (r *PNRContactRepositoryImpl) Update(ctx context.Context, contact *models.PNRContact) error {
 	if err := r.db.WithContext(ctx).Save(contact).Error; err != nil {
 		return fmt.Errorf("PNRContactRepo.Update: %w", err)
 	}
