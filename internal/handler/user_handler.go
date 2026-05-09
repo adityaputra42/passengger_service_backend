@@ -22,7 +22,17 @@ func NewUserHandler(svc services.UserService) *UserHandler {
 	return &UserHandler{svc: svc}
 }
 
-// POST /users  [admin]
+// Create godoc
+// @Summary      Daftarkan user baru
+// @Description  Mendaftarkan user baru (customer self-register atau admin membuat akun).
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.CreateUserRequest  true  "Data user"
+// @Success      200      {object}  utils.Response{data=models.User}
+// @Failure      400      {object}  utils.Response
+// @Failure      409      {object}  utils.Response  "Email sudah terdaftar"
+// @Router       /users [post]
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateUserRequest
 
@@ -40,7 +50,18 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "Create user successful", user)
 }
 
-// GET /users  [admin]
+// List godoc
+// @Summary      Daftar semua user
+// @Description  Mengambil seluruh daftar user dengan pagination. Hanya admin ke atas.
+// @Tags         User
+// @Produce      json
+// @Param        page   query     int  false  "Halaman (default: 1)"
+// @Param        limit  query     int  false  "Jumlah per halaman (default: 10)"
+// @Success      200    {object}  utils.Response{data=dto.UserListResponse}
+// @Failure      401    {object}  utils.Response
+// @Failure      403    {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /users [get]
 func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 	page, limit := utils.PageLimit(r)
 
@@ -56,7 +77,19 @@ func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", users)
 }
 
-// GET /users/{uid}  [admin]
+// Get godoc
+// @Summary      Detail user
+// @Description  Mengambil detail satu user berdasarkan UID. Hanya admin ke atas.
+// @Tags         User
+// @Produce      json
+// @Param        uid  path      string  true  "User UUID"
+// @Success      200  {object}  utils.Response{data=models.User}
+// @Failure      400  {object}  utils.Response
+// @Failure      401  {object}  utils.Response
+// @Failure      403  {object}  utils.Response
+// @Failure      404  {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /users/{uid} [get]
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	uid, ok := parseUID(w, r, "uid")
 	if !ok {
@@ -71,7 +104,21 @@ func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", user)
 }
 
-// PUT /users/{uid}  [admin]
+// Update godoc
+// @Summary      Update user
+// @Description  Memperbarui data user (nama, role). Hanya admin ke atas.
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        uid      path      string                 true  "User UUID"
+// @Param        request  body      dto.UpdateUserRequest  true  "Data update"
+// @Success      200      {object}  utils.Response{data=models.User}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Failure      404      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /users/{uid} [put]
 func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	uid, ok := parseUID(w, r, "uid")
 	if !ok {
@@ -92,7 +139,19 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", user)
 }
 
-// DELETE /users/{uid}  [admin]
+// Delete godoc
+// @Summary      Hapus user
+// @Description  Menghapus user. Hanya admin ke atas.
+// @Tags         User
+// @Produce      json
+// @Param        uid  path      string  true  "User UUID"
+// @Success      200  {object}  utils.Response
+// @Failure      400  {object}  utils.Response
+// @Failure      401  {object}  utils.Response
+// @Failure      403  {object}  utils.Response
+// @Failure      404  {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /users/{uid} [delete]
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	uid, ok := parseUID(w, r, "uid")
 	if !ok {
@@ -107,7 +166,18 @@ func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", nil)
 }
 
-// PUT /users/me/profile  [AuthRequired]
+// UpdateProfile godoc
+// @Summary      Update profil sendiri
+// @Description  User yang sedang login memperbarui profil dirinya sendiri (nama lengkap).
+// @Tags         User
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.UpdateProfileRequest  true  "Data profil"
+// @Success      200      {object}  utils.Response{data=models.User}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /users/me/profile [put]
 func (h *UserHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	uid := middleware.GetUserIDFromContext(r)
 	if uid == &uuid.Nil {

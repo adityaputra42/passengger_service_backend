@@ -1,0 +1,3757 @@
+basePath: /api/v1
+definitions:
+  dto.AddBaggageRequest:
+    properties:
+      passenger_id:
+        type: string
+      segment_id:
+        type: string
+      weight:
+        type: number
+    required:
+    - passenger_id
+    - segment_id
+    - weight
+    type: object
+  dto.AddMealRequest:
+    properties:
+      meal_code:
+        maxLength: 10
+        type: string
+      segment_id:
+        type: string
+    required:
+    - meal_code
+    - segment_id
+    type: object
+  dto.AddSSRRequest:
+    properties:
+      segment_id:
+        type: string
+      ssr_code:
+        maxLength: 10
+        type: string
+    required:
+    - segment_id
+    - ssr_code
+    type: object
+  dto.AircraftResponse:
+    properties:
+      id:
+        type: string
+      manufacturer:
+        type: string
+      model:
+        type: string
+      seats:
+        items:
+          $ref: '#/definitions/dto.AircraftSeatResponse'
+        type: array
+      total_seats:
+        type: integer
+    type: object
+  dto.AircraftSeatResponse:
+    properties:
+      id:
+        type: string
+      is_exit_row:
+        type: boolean
+      row_number:
+        type: integer
+      seat_class:
+        $ref: '#/definitions/dto.SeatClassResponse'
+      seat_letter:
+        type: string
+      seat_number:
+        type: string
+      seat_type:
+        type: string
+      x_position:
+        type: integer
+      y_position:
+        type: integer
+    type: object
+  dto.AirportResponse:
+    properties:
+      city:
+        type: string
+      code:
+        type: string
+      country:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      timezone:
+        type: string
+    type: object
+  dto.AuthResponseDTO:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/dto.UserResponse'
+    type: object
+  dto.BaggageResponse:
+    properties:
+      id:
+        type: string
+      passenger_id:
+        type: string
+      segment_id:
+        type: string
+      status:
+        $ref: '#/definitions/models.BaggageStatus'
+      tag_number:
+        type: string
+      weight:
+        type: number
+    type: object
+  dto.BoardingPassResponse:
+    properties:
+      boarding_group:
+        type: string
+      boarding_time:
+        type: string
+      departure_time:
+        type: string
+      destination:
+        type: string
+      flight_number:
+        type: string
+      gate:
+        type: string
+      id:
+        type: string
+      origin:
+        type: string
+      passenger_id:
+        type: string
+      passenger_name:
+        type: string
+      qr_code:
+        type: string
+      seat_number:
+        type: string
+      segment_id:
+        type: string
+    type: object
+  dto.ChangePasswordRequest:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+      old_password:
+        minLength: 6
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  dto.CheckinRequest:
+    properties:
+      passenger_id:
+        type: string
+      segment_id:
+        type: string
+    required:
+    - passenger_id
+    - segment_id
+    type: object
+  dto.CheckinResponse:
+    properties:
+      checkin_time:
+        type: string
+      id:
+        type: string
+      passenger_id:
+        type: string
+      segment_id:
+        type: string
+    type: object
+  dto.CheckinResultResponse:
+    properties:
+      boarding_pass:
+        $ref: '#/definitions/dto.BoardingPassResponse'
+      checkin:
+        $ref: '#/definitions/dto.CheckinResponse'
+    type: object
+  dto.ContactRequest:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      phone:
+        maxLength: 50
+        type: string
+    required:
+    - email
+    - name
+    - phone
+    type: object
+  dto.CreateAircraftRequest:
+    properties:
+      manufacturer:
+        maxLength: 100
+        type: string
+      model:
+        maxLength: 100
+        type: string
+    required:
+    - manufacturer
+    - model
+    type: object
+  dto.CreateAirportRequest:
+    properties:
+      city:
+        maxLength: 255
+        type: string
+      code:
+        type: string
+      country:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      timezone:
+        maxLength: 100
+        type: string
+    required:
+    - city
+    - code
+    - country
+    - name
+    - timezone
+    type: object
+  dto.CreateBookingRequest:
+    properties:
+      contact:
+        $ref: '#/definitions/dto.ContactRequest'
+      passengers:
+        items:
+          $ref: '#/definitions/dto.PassengerRequest'
+        maxItems: 9
+        minItems: 1
+        type: array
+      segments:
+        items:
+          $ref: '#/definitions/dto.SegmentRequest'
+        maxItems: 8
+        minItems: 1
+        type: array
+      trip_type:
+        allOf:
+        - $ref: '#/definitions/dto.TripType'
+        enum:
+        - one_way
+        - round_trip
+        - multi_city
+    required:
+    - contact
+    - passengers
+    - segments
+    - trip_type
+    type: object
+  dto.CreateFlightScheduleRequest:
+    properties:
+      arrival_airport_code:
+        type: string
+      arrival_time:
+        type: string
+      departure_airport_code:
+        type: string
+      departure_time:
+        type: string
+      flight_number:
+        maxLength: 10
+        type: string
+      operating_days:
+        type: string
+    required:
+    - arrival_airport_code
+    - arrival_time
+    - departure_airport_code
+    - departure_time
+    - flight_number
+    - operating_days
+    type: object
+  dto.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      password:
+        maxLength: 100
+        minLength: 8
+        type: string
+      role_id:
+        minimum: 1
+        type: integer
+    required:
+    - password
+    - role_id
+    type: object
+  dto.FlightListResponse:
+    properties:
+      flights:
+        items:
+          $ref: '#/definitions/dto.FlightResponse'
+        type: array
+    type: object
+  dto.FlightResponse:
+    properties:
+      aircraft:
+        $ref: '#/definitions/dto.AircraftResponse'
+      arrival_time:
+        type: string
+      available_seats:
+        type: integer
+      departure_time:
+        type: string
+      duration_minutes:
+        type: integer
+      flight_number:
+        type: string
+      id:
+        type: string
+      lowest_price:
+        type: number
+      schedule:
+        $ref: '#/definitions/dto.FlightScheduleResponse'
+      status:
+        $ref: '#/definitions/models.FlightStatus'
+    type: object
+  dto.FlightScheduleResponse:
+    properties:
+      arrival_airport:
+        $ref: '#/definitions/dto.AirportResponse'
+      arrival_time:
+        type: string
+      departure_airport:
+        $ref: '#/definitions/dto.AirportResponse'
+      departure_time:
+        type: string
+      flight_number:
+        type: string
+      id:
+        type: string
+      operating_days:
+        type: string
+    type: object
+  dto.FlightSeatResult:
+    properties:
+      class_code:
+        type: string
+      class_name:
+        type: string
+      flight_seat:
+        $ref: '#/definitions/models.FlightSeat'
+      is_exit_row:
+        type: boolean
+      row_number:
+        type: integer
+      seat_letter:
+        type: string
+      seat_number:
+        type: string
+      seat_type:
+        type: string
+    type: object
+  dto.GenerateSeatsRequest:
+    properties:
+      classes:
+        items:
+          $ref: '#/definitions/dto.SeatClassConfig'
+        minItems: 1
+        type: array
+    required:
+    - classes
+    type: object
+  dto.InitiatePaymentRequest:
+    properties:
+      method:
+        allOf:
+        - $ref: '#/definitions/models.PaymentMethod'
+        enum:
+        - credit_card
+        - debit_card
+        - bank_transfer
+        - e_wallet
+      pnr_id:
+        type: string
+    required:
+    - method
+    - pnr_id
+    type: object
+  dto.IssueBoardingPassRequest:
+    properties:
+      boarding_group:
+        maxLength: 10
+        type: string
+      boarding_time:
+        type: string
+      gate:
+        maxLength: 10
+        type: string
+      passenger_id:
+        type: string
+      segment_id:
+        type: string
+    required:
+    - boarding_group
+    - boarding_time
+    - gate
+    - passenger_id
+    - segment_id
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.PNRContactResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  dto.PNRListResponse:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      pnrs:
+        items:
+          $ref: '#/definitions/dto.PNRResponse'
+        type: array
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  dto.PNRPassengerResponse:
+    properties:
+      baggage:
+        items:
+          $ref: '#/definitions/dto.BaggageResponse'
+        type: array
+      birth_date:
+        type: string
+      first_name:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      meals:
+        items:
+          $ref: '#/definitions/dto.PassengerMealResponse'
+        type: array
+      passenger_type:
+        $ref: '#/definitions/models.PassengerType'
+      passport_number:
+        type: string
+      seat_assignment:
+        $ref: '#/definitions/dto.SeatAssignmentResponse'
+      ssrs:
+        items:
+          $ref: '#/definitions/dto.PassengerSSRResponse'
+        type: array
+      ticket:
+        $ref: '#/definitions/dto.TicketResponse'
+    type: object
+  dto.PNRResponse:
+    properties:
+      contact:
+        $ref: '#/definitions/dto.PNRContactResponse'
+      created_at:
+        type: string
+      id:
+        type: string
+      passengers:
+        items:
+          $ref: '#/definitions/dto.PNRPassengerResponse'
+        type: array
+      payments:
+        items:
+          $ref: '#/definitions/dto.PaymentResponse'
+        type: array
+      record_locator:
+        type: string
+      segments:
+        items:
+          $ref: '#/definitions/dto.PNRSegmentResponse'
+        type: array
+      status:
+        $ref: '#/definitions/models.PNRStatus'
+      total_amount:
+        type: number
+      trip_type:
+        type: string
+      ttl:
+        type: string
+    type: object
+  dto.PNRSegmentResponse:
+    properties:
+      flight:
+        $ref: '#/definitions/dto.FlightResponse'
+      id:
+        type: string
+      segment_order:
+        type: integer
+    type: object
+  dto.PassengerMealResponse:
+    properties:
+      id:
+        type: string
+      meal_code:
+        type: string
+      meal_name:
+        type: string
+      segment_id:
+        type: string
+    type: object
+  dto.PassengerRequest:
+    properties:
+      birth_date:
+        type: string
+      first_name:
+        maxLength: 100
+        type: string
+      last_name:
+        maxLength: 100
+        type: string
+      passenger_type:
+        allOf:
+        - $ref: '#/definitions/models.PassengerType'
+        enum:
+        - ADT
+        - CHD
+        - INF
+      passport_number:
+        maxLength: 50
+        type: string
+    required:
+    - first_name
+    - last_name
+    - passenger_type
+    type: object
+  dto.PassengerSSRResponse:
+    properties:
+      id:
+        type: string
+      segment_id:
+        type: string
+      ssr_code:
+        type: string
+      ssr_name:
+        type: string
+    type: object
+  dto.PaymentResponse:
+    properties:
+      amount:
+        type: number
+      id:
+        type: string
+      method:
+        $ref: '#/definitions/models.PaymentMethod'
+      paid_at:
+        type: string
+      pnr_id:
+        type: string
+      status:
+        $ref: '#/definitions/models.PaymentStatus'
+    type: object
+  dto.RoleInput:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      is_system_role:
+        type: boolean
+      level:
+        minimum: 1
+        type: integer
+      name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      permission_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - level
+    - name
+    type: object
+  dto.RolePermissionInput:
+    properties:
+      permission_ids:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+    required:
+    - permission_ids
+    type: object
+  dto.SeatAssignmentResponse:
+    properties:
+      assigned_at:
+        type: string
+      flight_seat_id:
+        type: string
+      id:
+        type: string
+      seat_class:
+        $ref: '#/definitions/dto.SeatClassResponse'
+      seat_number:
+        type: string
+      segment_id:
+        type: string
+    type: object
+  dto.SeatClassConfig:
+    properties:
+      class_code:
+        enum:
+        - F
+        - C
+        - "Y"
+        type: string
+      exit_row_nums:
+        items:
+          type: integer
+        type: array
+      letters:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      rows:
+        minimum: 1
+        type: integer
+    required:
+    - class_code
+    - letters
+    - rows
+    type: object
+  dto.SeatClassResponse:
+    properties:
+      code:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.SeatSelectionRequest:
+    properties:
+      flight_seat_id:
+        type: string
+      passenger_index:
+        minimum: 0
+        type: integer
+    required:
+    - flight_seat_id
+    type: object
+  dto.SegmentRequest:
+    properties:
+      flight_id:
+        type: string
+      seat_selections:
+        items:
+          $ref: '#/definitions/dto.SeatSelectionRequest'
+        type: array
+    required:
+    - flight_id
+    type: object
+  dto.TicketResponse:
+    properties:
+      id:
+        type: string
+      issued_at:
+        type: string
+      ticket_number:
+        type: string
+    type: object
+  dto.TripType:
+    enum:
+    - one_way
+    - round_trip
+    - multi_city
+    type: string
+    x-enum-varnames:
+    - TripOneWay
+    - TripRoundTrip
+    - TripMultiCity
+  dto.UpdateAircraftRequest:
+    properties:
+      manufacturer:
+        maxLength: 100
+        type: string
+      model:
+        maxLength: 100
+        type: string
+    type: object
+  dto.UpdateAirportRequest:
+    properties:
+      city:
+        maxLength: 255
+        type: string
+      country:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      timezone:
+        maxLength: 100
+        type: string
+    type: object
+  dto.UpdateContactRequest:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      phone:
+        maxLength: 50
+        type: string
+    type: object
+  dto.UpdateFlightScheduleRequest:
+    properties:
+      arrival_time:
+        type: string
+      departure_time:
+        type: string
+      operating_days:
+        type: string
+    type: object
+  dto.UpdateProfileRequest:
+    properties:
+      full_name:
+        maxLength: 255
+        minLength: 2
+        type: string
+    type: object
+  dto.UpdateUserRequest:
+    properties:
+      full_name:
+        maxLength: 255
+        minLength: 2
+        type: string
+      role_id:
+        type: integer
+    type: object
+  dto.UserListResponse:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/dto.UserResponse'
+        type: array
+    type: object
+  dto.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      role_id:
+        type: integer
+      uid:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Aircraft:
+    properties:
+      id:
+        type: string
+      manufacturer:
+        maxLength: 100
+        type: string
+      model:
+        maxLength: 100
+        type: string
+      seats:
+        items:
+          $ref: '#/definitions/models.AircraftSeat'
+        type: array
+      total_seats:
+        minimum: 0
+        type: integer
+    type: object
+  models.AircraftSeat:
+    properties:
+      aircraft:
+        $ref: '#/definitions/models.Aircraft'
+      aircraft_id:
+        type: string
+      id:
+        type: string
+      is_exit_row:
+        type: boolean
+      row_number:
+        minimum: 1
+        type: integer
+      seat_class:
+        $ref: '#/definitions/models.SeatClass'
+      seat_class_id:
+        type: string
+      seat_letter:
+        maxLength: 1
+        type: string
+      seat_number:
+        maxLength: 5
+        type: string
+      seat_type:
+        maxLength: 20
+        type: string
+      x_position:
+        type: integer
+      y_position:
+        type: integer
+    required:
+    - aircraft_id
+    - row_number
+    - seat_number
+    type: object
+  models.Airport:
+    properties:
+      city:
+        maxLength: 255
+        type: string
+      code:
+        type: string
+      country:
+        maxLength: 255
+        type: string
+      id:
+        type: string
+      name:
+        maxLength: 255
+        type: string
+      timezone:
+        maxLength: 100
+        type: string
+    required:
+    - code
+    type: object
+  models.BaggageStatus:
+    enum:
+    - checked_in
+    - loaded
+    - delivered
+    - lost
+    type: string
+    x-enum-varnames:
+    - BaggageCheckedIn
+    - BaggageLoaded
+    - BaggageDelivered
+    - BaggageLost
+  models.Flight:
+    properties:
+      aircraft:
+        $ref: '#/definitions/models.Aircraft'
+      aircraft_id:
+        type: string
+      arrival_time:
+        type: string
+      departure_time:
+        type: string
+      flight_seats:
+        items:
+          $ref: '#/definitions/models.FlightSeat'
+        type: array
+      id:
+        type: string
+      schedule:
+        $ref: '#/definitions/models.FlightSchedule'
+      schedule_id:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/models.FlightStatus'
+        enum:
+        - scheduled
+        - boarding
+        - departed
+        - arrived
+        - cancelled
+        - delayed
+    type: object
+  models.FlightSchedule:
+    properties:
+      arrival_airport:
+        $ref: '#/definitions/models.Airport'
+      arrival_airport_id:
+        type: string
+      arrival_time:
+        type: string
+      departure_airport:
+        $ref: '#/definitions/models.Airport'
+      departure_airport_id:
+        type: string
+      departure_time:
+        type: string
+      flight_number:
+        maxLength: 10
+        type: string
+      flights:
+        items:
+          $ref: '#/definitions/models.Flight'
+        type: array
+      id:
+        type: string
+      operating_days:
+        type: string
+    type: object
+  models.FlightSeat:
+    properties:
+      aircraft_seat:
+        $ref: '#/definitions/models.AircraftSeat'
+      aircraft_seat_id:
+        type: string
+      flight:
+        $ref: '#/definitions/models.Flight'
+      flight_id:
+        type: string
+      id:
+        type: string
+      price:
+        minimum: 0
+        type: number
+      status:
+        allOf:
+        - $ref: '#/definitions/models.FlightSeatStatus'
+        enum:
+        - available
+        - locked
+        - booked
+    type: object
+  models.FlightSeatStatus:
+    enum:
+    - available
+    - locked
+    - booked
+    type: string
+    x-enum-varnames:
+    - FlightSeatAvailable
+    - FlightSeatLocked
+    - FlightSeatBooked
+  models.FlightStatus:
+    enum:
+    - scheduled
+    - boarding
+    - departed
+    - arrived
+    - cancelled
+    - delayed
+    type: string
+    x-enum-varnames:
+    - FlightStatusScheduled
+    - FlightStatusBoarding
+    - FlightStatusDeparted
+    - FlightStatusArrived
+    - FlightStatusCancelled
+    - FlightStatusDelayed
+  models.PNRStatus:
+    enum:
+    - hold
+    - confirmed
+    - cancelled
+    - ticketed
+    type: string
+    x-enum-varnames:
+    - PNRStatusHold
+    - PNRStatusConfirmed
+    - PNRStatusCancelled
+    - PNRStatusTicketed
+  models.PassengerType:
+    enum:
+    - ADT
+    - CHD
+    - INF
+    type: string
+    x-enum-comments:
+      PassengerADT: Adult
+      PassengerCHD: Child
+      PassengerINF: Infant
+    x-enum-descriptions:
+    - Adult
+    - Child
+    - Infant
+    x-enum-varnames:
+    - PassengerADT
+    - PassengerCHD
+    - PassengerINF
+  models.PaymentMethod:
+    enum:
+    - credit_card
+    - debit_card
+    - bank_transfer
+    - e_wallet
+    type: string
+    x-enum-varnames:
+    - PaymentMethodCreditCard
+    - PaymentMethodDebitCard
+    - PaymentMethodBankTransfer
+    - PaymentMethodEWallet
+  models.PaymentStatus:
+    enum:
+    - pending
+    - success
+    - failed
+    - refunded
+    type: string
+    x-enum-varnames:
+    - PaymentStatusPending
+    - PaymentStatusSuccess
+    - PaymentStatusFailed
+    - PaymentStatusRefunded
+  models.Permission:
+    properties:
+      action:
+        maxLength: 50
+        minLength: 2
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      resource:
+        maxLength: 50
+        minLength: 2
+        type: string
+      roles:
+        items:
+          $ref: '#/definitions/models.Role'
+        type: array
+      updated_at:
+        type: string
+    required:
+    - action
+    - name
+    - resource
+    type: object
+  models.Role:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_system_role:
+        type: boolean
+      level:
+        minimum: 1
+        type: integer
+      name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/models.Permission'
+        type: array
+      updated_at:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+    required:
+    - level
+    - name
+    type: object
+  models.SeatClass:
+    properties:
+      code:
+        maxLength: 10
+        type: string
+      id:
+        type: string
+      name:
+        maxLength: 50
+        type: string
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        maxLength: 255
+        type: string
+      full_name:
+        maxLength: 255
+        minLength: 2
+        type: string
+      role:
+        $ref: '#/definitions/models.Role'
+      role_id:
+        type: integer
+      uid:
+        type: string
+      updated_at:
+        type: string
+    required:
+    - email
+    - full_name
+    - role_id
+    type: object
+  utils.Response:
+    properties:
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@airline.com
+    name: API Support
+  description: REST API untuk sistem Passenger Service System (PSS) maskapai penerbangan.
+    Mencakup manajemen penerbangan, pemesanan tiket, check-in, bagasi, dan boarding
+    pass.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Passenger Service Backend API
+  version: "1.0"
+paths:
+  /aircraft:
+    get:
+      description: Mengambil seluruh daftar aircraft yang tersedia. Endpoint ini bersifat
+        publik.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.AircraftResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Daftar semua aircraft
+      tags:
+      - Aircraft
+    post:
+      consumes:
+      - application/json
+      description: Membuat data aircraft baru. Hanya admin dan super_admin yang bisa
+        mengakses endpoint ini.
+      parameters:
+      - description: Data aircraft
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateAircraftRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AircraftResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah aircraft baru
+      tags:
+      - Aircraft
+  /aircraft/{id}:
+    delete:
+      description: Menghapus data aircraft. Hanya admin dan super_admin.
+      parameters:
+      - description: Aircraft UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus aircraft
+      tags:
+      - Aircraft
+    get:
+      description: Mengambil detail satu aircraft berdasarkan ID.
+      parameters:
+      - description: Aircraft UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AircraftResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Detail aircraft
+      tags:
+      - Aircraft
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui informasi aircraft. Hanya admin dan super_admin.
+      parameters:
+      - description: Aircraft UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateAircraftRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AircraftResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Update data aircraft
+      tags:
+      - Aircraft
+  /aircraft/{id}/seats:
+    get:
+      description: Mengambil detail aircraft lengkap dengan daftar semua kursi dan
+        kelasnya.
+      parameters:
+      - description: Aircraft UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AircraftResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Detail aircraft beserta konfigurasi kursi
+      tags:
+      - Aircraft
+  /aircraft/{id}/seats/generate:
+    post:
+      consumes:
+      - application/json
+      description: Membuat konfigurasi kursi aircraft berdasarkan layout yang diberikan.
+        Hanya admin dan super_admin.
+      parameters:
+      - description: Aircraft UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Konfigurasi layout kursi
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GenerateSeatsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.AircraftSeatResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Generate kursi aircraft
+      tags:
+      - Aircraft
+  /airport:
+    get:
+      description: Mengambil seluruh daftar airport. Bisa filter dengan query param
+        ?q=jakarta untuk pencarian.
+      parameters:
+      - description: Kata kunci pencarian (nama, kota, kode, negara)
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.AirportResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Daftar semua airport
+      tags:
+      - Airport
+    post:
+      consumes:
+      - application/json
+      description: Membuat data airport baru. Hanya admin dan super_admin.
+      parameters:
+      - description: Data airport
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateAirportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AirportResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "409":
+          description: Kode IATA sudah terdaftar
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah airport baru
+      tags:
+      - Airport
+  /airport/{id}:
+    delete:
+      description: Menghapus data airport. Hanya admin dan super_admin.
+      parameters:
+      - description: Airport UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus airport
+      tags:
+      - Airport
+    get:
+      description: Mengambil detail satu airport berdasarkan ID.
+      parameters:
+      - description: Airport UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AirportResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Detail airport
+      tags:
+      - Airport
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui informasi airport. Hanya admin dan super_admin.
+      parameters:
+      - description: Airport UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateAirportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AirportResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Update data airport
+      tags:
+      - Airport
+  /airport/code/{code}:
+    get:
+      description: 'Mengambil detail airport menggunakan kode IATA 3 huruf (contoh:
+        CGK, DPS).'
+      parameters:
+      - description: Kode IATA (3 huruf)
+        example: CGK
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AirportResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Cari airport berdasarkan kode IATA
+      tags:
+      - Airport
+  /auth/admin/login:
+    post:
+      consumes:
+      - application/json
+      description: Login khusus untuk admin (level >= 3). Customer tidak bisa login
+        di sini.
+      parameters:
+      - description: Kredensial login admin
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AuthResponseDTO'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Bukan admin atau kredensial salah
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Login admin
+      tags:
+      - Auth
+  /auth/change-password:
+    put:
+      consumes:
+      - application/json
+      description: Mengganti password user yang sedang login.
+      parameters:
+      - description: Password lama dan baru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "422":
+          description: Password lama tidak sesuai
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Ganti password
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login dengan email dan password. Mengembalikan access token dan
+        refresh token.
+      parameters:
+      - description: Kredensial login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AuthResponseDTO'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Email atau password salah
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Login penumpang/customer
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      description: Logout dari sesi yang sedang aktif.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      description: Mengambil data user berdasarkan token yang dikirimkan.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Profil user yang sedang login
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Mendapatkan access token baru menggunakan refresh token yang masih
+        valid.
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            refresh_token:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AuthResponseDTO'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Refresh token tidak valid atau expired
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Refresh access token
+      tags:
+      - Auth
+  /baggage:
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan bagasi baru untuk penumpang. Penumpang harus sudah
+        check-in terlebih dahulu.
+      parameters:
+      - description: Data bagasi
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddBaggageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BaggageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Penumpang tidak ditemukan
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "422":
+          description: Penumpang belum check-in
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Daftarkan bagasi penumpang
+      tags:
+      - Baggage
+  /baggage/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui status bagasi (checked_in, loaded, delivered, lost).
+        Hanya agent ke atas.
+      parameters:
+      - description: Baggage UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status baru
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            status:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BaggageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Update status bagasi
+      tags:
+      - Baggage
+  /baggage/passenger/{passengerID}:
+    get:
+      description: Mengambil semua bagasi milik seorang penumpang.
+      parameters:
+      - description: Passenger UUID
+        in: path
+        name: passengerID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.BaggageResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Daftar bagasi penumpang
+      tags:
+      - Baggage
+  /boarding_passes:
+    post:
+      consumes:
+      - application/json
+      description: Menerbitkan boarding pass untuk penumpang yang sudah check-in.
+        Hanya agent ke atas.
+      parameters:
+      - description: Data boarding pass
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.IssueBoardingPassRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BoardingPassResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "409":
+          description: Boarding pass sudah diterbitkan
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "422":
+          description: Penumpang belum check-in
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Terbitkan boarding pass
+      tags:
+      - BoardingPass
+  /boarding_passes/passenger/{passengerID}/segment/{segmentID}:
+    get:
+      description: Mengambil boarding pass penumpang untuk segment tertentu.
+      parameters:
+      - description: Passenger UUID
+        in: path
+        name: passengerID
+        required: true
+        type: string
+      - description: Segment UUID
+        in: path
+        name: segmentID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BoardingPassResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Detail boarding pass
+      tags:
+      - BoardingPass
+  /boarding_passes/segment/{segmentID}:
+    get:
+      description: Mengambil semua boarding pass untuk satu segment penerbangan. Hanya
+        agent ke atas.
+      parameters:
+      - description: Segment UUID
+        in: path
+        name: segmentID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.BoardingPassResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Daftar boarding pass per segment
+      tags:
+      - BoardingPass
+  /bookings:
+    get:
+      description: Mengambil seluruh daftar PNR. Hanya admin dan super_admin.
+      parameters:
+      - description: 'Halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Jumlah per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PNRListResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Daftar semua PNR
+      tags:
+      - Booking
+    post:
+      consumes:
+      - application/json
+      description: Membuat pemesanan tiket baru. Mendukung one_way, round_trip, dan
+        multi_city. Seat akan di-lock selama 30 menit.
+      parameters:
+      - description: Data pemesanan
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PNRResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Penerbangan atau kursi tidak ditemukan
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "409":
+          description: Kursi sudah dipesan
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Buat pemesanan (PNR)
+      tags:
+      - Booking
+  /bookings/{id}:
+    delete:
+      description: Membatalkan PNR dan melepaskan kursi yang di-lock. PNR yang sudah
+        ticketed tidak bisa dibatalkan.
+      parameters:
+      - description: PNR UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "422":
+          description: PNR sudah dibatalkan atau sudah ticketed
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Batalkan pemesanan
+      tags:
+      - Booking
+    get:
+      description: Mengambil detail PNR lengkap termasuk penumpang, segmen, kursi,
+        dan pembayaran.
+      parameters:
+      - description: PNR UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PNRResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Detail pemesanan berdasarkan ID
+      tags:
+      - Booking
+  /bookings/{id}/contact:
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui informasi kontak (nama, email, telepon) pada sebuah
+        PNR.
+      parameters:
+      - description: PNR UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data kontak baru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateContactRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PNRContactResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Update kontak pemesanan
+      tags:
+      - Booking
+  /bookings/locator/{locator}:
+    get:
+      description: 'Mengambil detail PNR menggunakan 6-karakter record locator (contoh:
+        ABC123).'
+      parameters:
+      - description: Record locator (6 karakter)
+        example: ABC123
+        in: path
+        name: locator
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PNRResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Cari pemesanan berdasarkan kode booking
+      tags:
+      - Booking
+  /bookings/meal/{mealID}:
+    delete:
+      description: Menghapus pilihan meal penumpang.
+      parameters:
+      - description: Meal UUID
+        in: path
+        name: mealID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus pilihan meal
+      tags:
+      - Booking
+  /bookings/passengers/{passengerID}/meal:
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan pilihan meal ke penumpang untuk segment tertentu.
+      parameters:
+      - description: Passenger UUID
+        in: path
+        name: passengerID
+        required: true
+        type: string
+      - description: Data meal
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddMealRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PassengerMealResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah pilihan meal
+      tags:
+      - Booking
+  /bookings/passengers/{passengerID}/ssr:
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan Special Service Request (kursi roda, meal khusus, dll)
+        ke penumpang.
+      parameters:
+      - description: Passenger UUID
+        in: path
+        name: passengerID
+        required: true
+        type: string
+      - description: Data SSR
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddSSRRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PassengerSSRResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah SSR ke penumpang
+      tags:
+      - Booking
+  /bookings/ssr/{ssrID}:
+    delete:
+      description: Menghapus SSR yang sudah ditambahkan ke penumpang.
+      parameters:
+      - description: SSR UUID
+        in: path
+        name: ssrID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus SSR penumpang
+      tags:
+      - Booking
+  /checkin:
+    post:
+      consumes:
+      - application/json
+      description: Melakukan check-in penumpang untuk segment penerbangan. Check-in
+        dibuka 24 jam sebelum dan ditutup 45 menit sebelum keberangkatan. Tiket harus
+        sudah diterbitkan.
+      parameters:
+      - description: Data check-in
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CheckinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CheckinResultResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "409":
+          description: Sudah check-in
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "422":
+          description: Di luar window check-in atau tiket belum ada
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Lakukan check-in
+      tags:
+      - CheckIn
+  /checkin/passenger/{passengerID}:
+    get:
+      description: Mengambil seluruh riwayat check-in seorang penumpang.
+      parameters:
+      - description: Passenger UUID
+        in: path
+        name: passengerID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.CheckinResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Riwayat check-in penumpang
+      tags:
+      - CheckIn
+  /flights/{id}:
+    get:
+      description: Mengambil detail satu penerbangan beserta jadwal dan aircraft.
+        Endpoint ini bersifat publik.
+      parameters:
+      - description: Flight UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.FlightResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Detail penerbangan
+      tags:
+      - Flight
+  /flights/{id}/seat-map:
+    get:
+      description: Mengambil seluruh peta kursi penerbangan beserta status ketersediaan
+        dan harga. Membutuhkan login.
+      parameters:
+      - description: Flight UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.FlightSeatResult'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Peta kursi penerbangan
+      tags:
+      - Flight
+  /flights/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Mengubah status penerbangan (scheduled, boarding, departed, arrived,
+        cancelled, delayed). Hanya admin.
+      parameters:
+      - description: Flight UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status baru
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            status:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Update status penerbangan
+      tags:
+      - Flight
+  /flights/generate:
+    post:
+      consumes:
+      - application/json
+      description: Membuat instance penerbangan dari sebuah jadwal untuk rentang tanggal
+        tertentu. Hanya admin.
+      parameters:
+      - description: Parameter generate
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            from:
+              type: string
+            schedule_id:
+              type: string
+            to:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  properties:
+                    generated:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Generate penerbangan dari jadwal
+      tags:
+      - Flight
+  /flights/search:
+    get:
+      description: Mencari penerbangan yang tersedia berdasarkan rute dan tanggal.
+        Endpoint ini bersifat publik.
+      parameters:
+      - description: Kode IATA keberangkatan
+        example: CGK
+        in: query
+        name: dep
+        required: true
+        type: string
+      - description: Kode IATA tujuan
+        example: DPS
+        in: query
+        name: arr
+        required: true
+        type: string
+      - description: Tanggal (YYYY-MM-DD)
+        example: "2026-05-15"
+        in: query
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.FlightListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Airport tidak ditemukan
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Cari penerbangan tersedia
+      tags:
+      - Flight
+  /payments:
+    get:
+      description: Mengambil semua riwayat pembayaran untuk sebuah PNR.
+      parameters:
+      - description: PNR UUID
+        in: query
+        name: pnr_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.PaymentResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Daftar pembayaran per PNR
+      tags:
+      - Payment
+    post:
+      consumes:
+      - application/json
+      description: 'Memulai proses pembayaran untuk sebuah PNR. Total dihitung dari
+        harga kursi yang di-assign. Status awal: pending.'
+      parameters:
+      - description: Data pembayaran
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.InitiatePaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PaymentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "422":
+          description: PNR sudah dibatalkan atau sudah ticketed
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Inisiasi pembayaran
+      tags:
+      - Payment
+  /payments/{id}/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Endpoint untuk payment gateway callback. Jika success=true, kursi
+        diubah ke booked dan tiket diterbitkan. Hanya admin.
+      parameters:
+      - description: Payment UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Hasil pembayaran
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            success:
+              type: boolean
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PaymentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "422":
+          description: Pembayaran tidak dalam status pending
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Konfirmasi pembayaran (webhook)
+      tags:
+      - Payment
+  /payments/{id}/refund:
+    post:
+      description: Memproses pengembalian uang untuk pembayaran yang sudah sukses.
+        Hanya admin.
+      parameters:
+      - description: Payment UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PaymentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "422":
+          description: Pembayaran belum success
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Proses refund
+      tags:
+      - Payment
+  /roles:
+    get:
+      description: Mengambil semua role beserta permission masing-masing. Hanya admin
+        ke atas.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Role'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Daftar semua role
+      tags:
+      - Role
+    post:
+      consumes:
+      - application/json
+      description: Membuat role baru beserta permission. Hanya super_admin.
+      parameters:
+      - description: Data role
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RoleInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Role'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Buat role baru
+      tags:
+      - Role
+  /roles/{id}:
+    delete:
+      description: Menghapus role. System role dan role yang masih digunakan user
+        tidak bisa dihapus. Hanya super_admin.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus role
+      tags:
+      - Role
+    get:
+      description: Mengambil detail role beserta seluruh permission-nya. Hanya admin
+        ke atas.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Role'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Detail role
+      tags:
+      - Role
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui informasi role. Hanya super_admin.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RoleInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Role'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Update role
+      tags:
+      - Role
+  /roles/{id}/permissions:
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan satu atau lebih permission ke role. Hanya super_admin.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Daftar permission ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RolePermissionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah permission ke role
+      tags:
+      - Role
+    put:
+      consumes:
+      - application/json
+      description: Mengganti seluruh permission role dengan daftar baru. Hanya super_admin.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Daftar permission ID baru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RolePermissionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Ganti permission role
+      tags:
+      - Role
+  /schedules:
+    get:
+      description: Mengambil seluruh jadwal penerbangan. Bisa filter rute dengan ?dep=CGK&arr=DPS.
+        Endpoint publik.
+      parameters:
+      - description: Kode IATA keberangkatan
+        in: query
+        name: dep
+        type: string
+      - description: Kode IATA tujuan
+        in: query
+        name: arr
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.FlightScheduleResponse'
+                  type: array
+              type: object
+      summary: Daftar jadwal penerbangan
+      tags:
+      - FlightSchedule
+    post:
+      consumes:
+      - application/json
+      description: Membuat jadwal penerbangan baru (recurring schedule). Hanya admin.
+      parameters:
+      - description: Data jadwal
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateFlightScheduleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.FlightScheduleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "409":
+          description: Nomor penerbangan sudah ada
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Buat jadwal penerbangan
+      tags:
+      - FlightSchedule
+  /schedules/{id}:
+    delete:
+      description: Menghapus jadwal penerbangan. Hanya admin.
+      parameters:
+      - description: Schedule UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus jadwal penerbangan
+      tags:
+      - FlightSchedule
+    get:
+      description: Mengambil detail satu jadwal penerbangan. Endpoint publik.
+      parameters:
+      - description: Schedule UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.FlightScheduleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Detail jadwal penerbangan
+      tags:
+      - FlightSchedule
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui jadwal penerbangan (waktu, operating days). Hanya admin.
+      parameters:
+      - description: Schedule UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateFlightScheduleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.FlightScheduleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Update jadwal penerbangan
+      tags:
+      - FlightSchedule
+  /users:
+    get:
+      description: Mengambil seluruh daftar user dengan pagination. Hanya admin ke
+        atas.
+      parameters:
+      - description: 'Halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Jumlah per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserListResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Daftar semua user
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      description: Mendaftarkan user baru (customer self-register atau admin membuat
+        akun).
+      parameters:
+      - description: Data user
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "409":
+          description: Email sudah terdaftar
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Daftarkan user baru
+      tags:
+      - User
+  /users/{uid}:
+    delete:
+      description: Menghapus user. Hanya admin ke atas.
+      parameters:
+      - description: User UUID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus user
+      tags:
+      - User
+    get:
+      description: Mengambil detail satu user berdasarkan UID. Hanya admin ke atas.
+      parameters:
+      - description: User UUID
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Detail user
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui data user (nama, role). Hanya admin ke atas.
+      parameters:
+      - description: User UUID
+        in: path
+        name: uid
+        required: true
+        type: string
+      - description: Data update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - User
+  /users/me/profile:
+    put:
+      consumes:
+      - application/json
+      description: User yang sedang login memperbarui profil dirinya sendiri (nama
+        lengkap).
+      parameters:
+      - description: Data profil
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Update profil sendiri
+      tags:
+      - User
+securityDefinitions:
+  BearerAuth:
+    description: 'Masukkan token dengan format: Bearer {token}'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

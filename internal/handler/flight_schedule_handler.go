@@ -16,7 +16,20 @@ func NewFlightScheduleHandler(svc services.FlightScheduleService) *FlightSchedul
 	return &FlightScheduleHandler{svc: svc}
 }
 
-// POST /schedules  [admin]
+// Create godoc
+// @Summary      Buat jadwal penerbangan
+// @Description  Membuat jadwal penerbangan baru (recurring schedule). Hanya admin.
+// @Tags         FlightSchedule
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.CreateFlightScheduleRequest  true  "Data jadwal"
+// @Success      200      {object}  utils.Response{data=dto.FlightScheduleResponse}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Failure      409      {object}  utils.Response  "Nomor penerbangan sudah ada"
+// @Security     BearerAuth
+// @Router       /schedules [post]
 func (h *FlightScheduleHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateFlightScheduleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -33,7 +46,15 @@ func (h *FlightScheduleHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// GET /schedules  — ?dep=CGK&arr=DPS untuk filter rute
+// List godoc
+// @Summary      Daftar jadwal penerbangan
+// @Description  Mengambil seluruh jadwal penerbangan. Bisa filter rute dengan ?dep=CGK&arr=DPS. Endpoint publik.
+// @Tags         FlightSchedule
+// @Produce      json
+// @Param        dep  query     string  false  "Kode IATA keberangkatan"
+// @Param        arr  query     string  false  "Kode IATA tujuan"
+// @Success      200  {object}  utils.Response{data=[]dto.FlightScheduleResponse}
+// @Router       /schedules [get]
 func (h *FlightScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 	dep := r.URL.Query().Get("dep")
 	arr := r.URL.Query().Get("arr")
@@ -70,7 +91,16 @@ func (h *FlightScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", out)
 }
 
-// GET /schedules/{id}
+// Get godoc
+// @Summary      Detail jadwal penerbangan
+// @Description  Mengambil detail satu jadwal penerbangan. Endpoint publik.
+// @Tags         FlightSchedule
+// @Produce      json
+// @Param        id   path      string  true  "Schedule UUID"
+// @Success      200  {object}  utils.Response{data=dto.FlightScheduleResponse}
+// @Failure      400  {object}  utils.Response
+// @Failure      404  {object}  utils.Response
+// @Router       /schedules/{id} [get]
 func (h *FlightScheduleHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, ok := utils.UUIDParam(w, r, "id")
 	if !ok {
@@ -85,7 +115,21 @@ func (h *FlightScheduleHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// PUT /schedules/{id}  [admin]
+// Update godoc
+// @Summary      Update jadwal penerbangan
+// @Description  Memperbarui jadwal penerbangan (waktu, operating days). Hanya admin.
+// @Tags         FlightSchedule
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string                          true  "Schedule UUID"
+// @Param        request  body      dto.UpdateFlightScheduleRequest  true  "Data update"
+// @Success      200      {object}  utils.Response{data=dto.FlightScheduleResponse}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Failure      404      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /schedules/{id} [put]
 func (h *FlightScheduleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, ok := utils.UUIDParam(w, r, "id")
 	if !ok {
@@ -105,7 +149,19 @@ func (h *FlightScheduleHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// DELETE /schedules/{id}  [admin]
+// Delete godoc
+// @Summary      Hapus jadwal penerbangan
+// @Description  Menghapus jadwal penerbangan. Hanya admin.
+// @Tags         FlightSchedule
+// @Produce      json
+// @Param        id   path      string  true  "Schedule UUID"
+// @Success      200  {object}  utils.Response
+// @Failure      400  {object}  utils.Response
+// @Failure      401  {object}  utils.Response
+// @Failure      403  {object}  utils.Response
+// @Failure      404  {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /schedules/{id} [delete]
 func (h *FlightScheduleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, ok := utils.UUIDParam(w, r, "id")
 	if !ok {

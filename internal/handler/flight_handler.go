@@ -19,7 +19,18 @@ func NewFlightHandler(svc services.FlightService) *FlightHandler {
 	return &FlightHandler{svc: svc}
 }
 
-// GET /flights/search?dep=CGK&arr=DPS&date=2026-04-01
+// Search godoc
+// @Summary      Cari penerbangan tersedia
+// @Description  Mencari penerbangan yang tersedia berdasarkan rute dan tanggal. Endpoint ini bersifat publik.
+// @Tags         Flight
+// @Produce      json
+// @Param        dep   query     string  true  "Kode IATA keberangkatan"  example(CGK)
+// @Param        arr   query     string  true  "Kode IATA tujuan"          example(DPS)
+// @Param        date  query     string  true  "Tanggal (YYYY-MM-DD)"      example(2026-05-15)
+// @Success      200   {object}  utils.Response{data=dto.FlightListResponse}
+// @Failure      400   {object}  utils.Response
+// @Failure      404   {object}  utils.Response  "Airport tidak ditemukan"
+// @Router       /flights/search [get]
 func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 	dep := r.URL.Query().Get("dep")
 	arr := r.URL.Query().Get("arr")
@@ -50,7 +61,16 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// GET /flights/{id}
+// Get godoc
+// @Summary      Detail penerbangan
+// @Description  Mengambil detail satu penerbangan beserta jadwal dan aircraft. Endpoint ini bersifat publik.
+// @Tags         Flight
+// @Produce      json
+// @Param        id   path      string  true  "Flight UUID"
+// @Success      200  {object}  utils.Response{data=dto.FlightResponse}
+// @Failure      400  {object}  utils.Response
+// @Failure      404  {object}  utils.Response
+// @Router       /flights/{id} [get]
 func (h *FlightHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, ok := utils.UUIDParam(w, r, "id")
 	if !ok {
@@ -64,7 +84,18 @@ func (h *FlightHandler) Get(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToFlightResponse(flight))
 }
 
-// GET /flights/{id}/seat-map
+// SeatMap godoc
+// @Summary      Peta kursi penerbangan
+// @Description  Mengambil seluruh peta kursi penerbangan beserta status ketersediaan dan harga. Membutuhkan login.
+// @Tags         Flight
+// @Produce      json
+// @Param        id   path      string  true  "Flight UUID"
+// @Success      200  {object}  utils.Response{data=[]dto.FlightSeatResult}
+// @Failure      400  {object}  utils.Response
+// @Failure      401  {object}  utils.Response
+// @Failure      404  {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /flights/{id}/seat-map [get]
 func (h *FlightHandler) SeatMap(w http.ResponseWriter, r *http.Request) {
 	id, ok := utils.UUIDParam(w, r, "id")
 	if !ok {
@@ -78,7 +109,20 @@ func (h *FlightHandler) SeatMap(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", seats)
 }
 
-// POST /flights/generate  [admin]  body: { schedule_id, from, to }
+// Generate godoc
+// @Summary      Generate penerbangan dari jadwal
+// @Description  Membuat instance penerbangan dari sebuah jadwal untuk rentang tanggal tertentu. Hanya admin.
+// @Tags         Flight
+// @Accept       json
+// @Produce      json
+// @Param        request  body      object{schedule_id=string,from=string,to=string}  true  "Parameter generate"
+// @Success      200      {object}  utils.Response{data=object{generated=int}}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Failure      404      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /flights/generate [post]
 func (h *FlightHandler) Generate(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		ScheduleID string `json:"schedule_id"`
@@ -112,7 +156,21 @@ func (h *FlightHandler) Generate(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// PATCH /flights/{id}/status  [admin]
+// UpdateStatus godoc
+// @Summary      Update status penerbangan
+// @Description  Mengubah status penerbangan (scheduled, boarding, departed, arrived, cancelled, delayed). Hanya admin.
+// @Tags         Flight
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string                  true  "Flight UUID"
+// @Param        request  body      object{status=string}   true  "Status baru"
+// @Success      200      {object}  utils.Response
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Failure      404      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /flights/{id}/status [patch]
 func (h *FlightHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	id, ok := utils.UUIDParam(w, r, "id")
 	if !ok {

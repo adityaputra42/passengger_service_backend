@@ -16,7 +16,21 @@ func NewCheckinHandler(svc services.CheckinService) *CheckinHandler {
 	return &CheckinHandler{svc: svc}
 }
 
-// POST /checkin  [AuthRequired]
+// Checkin godoc
+// @Summary      Lakukan check-in
+// @Description  Melakukan check-in penumpang untuk segment penerbangan. Check-in dibuka 24 jam sebelum dan ditutup 45 menit sebelum keberangkatan. Tiket harus sudah diterbitkan.
+// @Tags         CheckIn
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.CheckinRequest  true  "Data check-in"
+// @Success      200      {object}  utils.Response{data=dto.CheckinResultResponse}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      404      {object}  utils.Response
+// @Failure      409      {object}  utils.Response  "Sudah check-in"
+// @Failure      422      {object}  utils.Response  "Di luar window check-in atau tiket belum ada"
+// @Security     BearerAuth
+// @Router       /checkin [post]
 func (h *CheckinHandler) Checkin(w http.ResponseWriter, r *http.Request) {
 	var req dto.CheckinRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -32,7 +46,17 @@ func (h *CheckinHandler) Checkin(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// GET /checkin/passenger/{passengerID}  [AuthRequired]
+// GetByPassenger godoc
+// @Summary      Riwayat check-in penumpang
+// @Description  Mengambil seluruh riwayat check-in seorang penumpang.
+// @Tags         CheckIn
+// @Produce      json
+// @Param        passengerID  path      string  true  "Passenger UUID"
+// @Success      200          {object}  utils.Response{data=[]dto.CheckinResponse}
+// @Failure      400          {object}  utils.Response
+// @Failure      401          {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /checkin/passenger/{passengerID} [get]
 func (h *CheckinHandler) GetByPassenger(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := utils.UUIDParam(w, r, "passengerID")
 	if !ok {

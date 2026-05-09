@@ -16,7 +16,19 @@ func NewRoleHandler(svc services.RoleService) *RoleHandler {
 	return &RoleHandler{svc: svc}
 }
 
-// POST /roles  [super_admin]
+// Create godoc
+// @Summary      Buat role baru
+// @Description  Membuat role baru beserta permission. Hanya super_admin.
+// @Tags         Role
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.RoleInput  true  "Data role"
+// @Success      200      {object}  utils.Response{data=models.Role}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /roles [post]
 func (h *RoleHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.RoleInput
 
@@ -33,7 +45,16 @@ func (h *RoleHandler) Create(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "Create role successful", role)
 }
 
-// GET /roles  [admin]
+// List godoc
+// @Summary      Daftar semua role
+// @Description  Mengambil semua role beserta permission masing-masing. Hanya admin ke atas.
+// @Tags         Role
+// @Produce      json
+// @Success      200  {object}  utils.Response{data=[]models.Role}
+// @Failure      401  {object}  utils.Response
+// @Failure      403  {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /roles [get]
 func (h *RoleHandler) List(w http.ResponseWriter, r *http.Request) {
 	roles, err := h.svc.FindAllRole(r.Context())
 	if err != nil {
@@ -44,7 +65,19 @@ func (h *RoleHandler) List(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "Create user successful", roles)
 }
 
-// GET /roles/{id}  [admin]
+// Get godoc
+// @Summary      Detail role
+// @Description  Mengambil detail role beserta seluruh permission-nya. Hanya admin ke atas.
+// @Tags         Role
+// @Produce      json
+// @Param        id   path      int  true  "Role ID"
+// @Success      200  {object}  utils.Response{data=models.Role}
+// @Failure      400  {object}  utils.Response
+// @Failure      401  {object}  utils.Response
+// @Failure      403  {object}  utils.Response
+// @Failure      404  {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /roles/{id} [get]
 func (h *RoleHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUint(w, r, "id")
 	if !ok {
@@ -59,7 +92,21 @@ func (h *RoleHandler) Get(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "Create user successful", role)
 }
 
-// PUT /roles/{id}  [super_admin]
+// Update godoc
+// @Summary      Update role
+// @Description  Memperbarui informasi role. Hanya super_admin.
+// @Tags         Role
+// @Accept       json
+// @Produce      json
+// @Param        id       path      int           true  "Role ID"
+// @Param        request  body      dto.RoleInput  true  "Data update"
+// @Success      200      {object}  utils.Response{data=models.Role}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Failure      404      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /roles/{id} [put]
 func (h *RoleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUint(w, r, "id")
 	if !ok {
@@ -80,7 +127,19 @@ func (h *RoleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "Create user successful", role)
 }
 
-// DELETE /roles/{id}  [super_admin]
+// Delete godoc
+// @Summary      Hapus role
+// @Description  Menghapus role. System role dan role yang masih digunakan user tidak bisa dihapus. Hanya super_admin.
+// @Tags         Role
+// @Produce      json
+// @Param        id   path      int  true  "Role ID"
+// @Success      200  {object}  utils.Response
+// @Failure      400  {object}  utils.Response
+// @Failure      401  {object}  utils.Response
+// @Failure      403  {object}  utils.Response
+// @Failure      404  {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /roles/{id} [delete]
 func (h *RoleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUint(w, r, "id")
 	if !ok {
@@ -95,7 +154,20 @@ func (h *RoleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "Create user successful", nil)
 }
 
-// POST /roles/{id}/permissions  [super_admin]
+// AssignPermissions godoc
+// @Summary      Tambah permission ke role
+// @Description  Menambahkan satu atau lebih permission ke role. Hanya super_admin.
+// @Tags         Role
+// @Accept       json
+// @Produce      json
+// @Param        id       path      int                          true  "Role ID"
+// @Param        request  body      dto.RolePermissionInput  true  "Daftar permission ID"
+// @Success      200      {object}  utils.Response
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /roles/{id}/permissions [post]
 func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUint(w, r, "id")
 	if !ok {
@@ -117,7 +189,20 @@ func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) 
 	utils.WriteJSON(w, http.StatusOK, "Create user successful", nil)
 }
 
-// PUT /roles/{id}/permissions  [super_admin]
+// ReplacePermissions godoc
+// @Summary      Ganti permission role
+// @Description  Mengganti seluruh permission role dengan daftar baru. Hanya super_admin.
+// @Tags         Role
+// @Accept       json
+// @Produce      json
+// @Param        id       path      int                          true  "Role ID"
+// @Param        request  body      dto.RolePermissionInput  true  "Daftar permission ID baru"
+// @Success      200      {object}  utils.Response
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /roles/{id}/permissions [put]
 func (h *RoleHandler) ReplacePermissions(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUint(w, r, "id")
 	if !ok {

@@ -16,16 +16,20 @@ func NewAircraftHandler(svc services.AircraftService) *AircraftHandler {
 	return &AircraftHandler{svc: svc}
 }
 
-// CreateAircraft - POST api/v1/aircraft  [admin]
-// @Summary SignIn user
-// @Description Login with email and password to get access token
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param request body models.LoginRequest true "Login request"
-// @Success 200 {object} utils.Response{data=models.TokenResponse} "Login successful"
-// @Failure 401 {object} utils.Response "Invalid credentials"
-// @Router /auth/login [post]
+// Create godoc
+// @Summary      Tambah aircraft baru
+// @Description  Membuat data aircraft baru. Hanya admin dan super_admin yang bisa mengakses endpoint ini.
+// @Tags         Aircraft
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.CreateAircraftRequest  true  "Data aircraft"
+// @Success      200      {object}  utils.Response{data=dto.AircraftResponse}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Failure      500      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /aircraft [post]
 func (h *AircraftHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateAircraftRequest
 
@@ -40,10 +44,16 @@ func (h *AircraftHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToAircraftResponse(aircraft))
-
 }
 
-// GET /aircraft
+// List godoc
+// @Summary      Daftar semua aircraft
+// @Description  Mengambil seluruh daftar aircraft yang tersedia. Endpoint ini bersifat publik.
+// @Tags         Aircraft
+// @Produce      json
+// @Success      200  {object}  utils.Response{data=[]dto.AircraftResponse}
+// @Failure      500  {object}  utils.Response
+// @Router       /aircraft [get]
 func (h *AircraftHandler) List(w http.ResponseWriter, r *http.Request) {
 	aircrafts, err := h.svc.GetAll(r.Context())
 	if err != nil {
@@ -59,7 +69,16 @@ func (h *AircraftHandler) List(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", out)
 }
 
-// GET /aircraft/{id}
+// Get godoc
+// @Summary      Detail aircraft
+// @Description  Mengambil detail satu aircraft berdasarkan ID.
+// @Tags         Aircraft
+// @Produce      json
+// @Param        id   path      string  true  "Aircraft UUID"
+// @Success      200  {object}  utils.Response{data=dto.AircraftResponse}
+// @Failure      400  {object}  utils.Response
+// @Failure      404  {object}  utils.Response
+// @Router       /aircraft/{id} [get]
 func (h *AircraftHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, ok := utils.UUIDParam(w, r, "id")
 	if !ok {
@@ -74,7 +93,16 @@ func (h *AircraftHandler) Get(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToAircraftResponse(aircraft))
 }
 
-// GET /aircraft/{id}/seats
+// GetWithSeats godoc
+// @Summary      Detail aircraft beserta konfigurasi kursi
+// @Description  Mengambil detail aircraft lengkap dengan daftar semua kursi dan kelasnya.
+// @Tags         Aircraft
+// @Produce      json
+// @Param        id   path      string  true  "Aircraft UUID"
+// @Success      200  {object}  utils.Response{data=dto.AircraftResponse}
+// @Failure      400  {object}  utils.Response
+// @Failure      404  {object}  utils.Response
+// @Router       /aircraft/{id}/seats [get]
 func (h *AircraftHandler) GetWithSeats(w http.ResponseWriter, r *http.Request) {
 	id, ok := utils.UUIDParam(w, r, "id")
 	if !ok {
@@ -89,7 +117,21 @@ func (h *AircraftHandler) GetWithSeats(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToAircraftResponse(aircraft))
 }
 
-// PUT /aircraft/{id}  [admin]
+// Update godoc
+// @Summary      Update data aircraft
+// @Description  Memperbarui informasi aircraft. Hanya admin dan super_admin.
+// @Tags         Aircraft
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string                     true  "Aircraft UUID"
+// @Param        request  body      dto.UpdateAircraftRequest  true  "Data update"
+// @Success      200      {object}  utils.Response{data=dto.AircraftResponse}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Failure      404      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /aircraft/{id} [put]
 func (h *AircraftHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, ok := utils.UUIDParam(w, r, "id")
 	if !ok {
@@ -110,7 +152,19 @@ func (h *AircraftHandler) Update(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", dto.ToAircraftResponse(aircraft))
 }
 
-// DELETE /aircraft/{id}  [admin]
+// Delete godoc
+// @Summary      Hapus aircraft
+// @Description  Menghapus data aircraft. Hanya admin dan super_admin.
+// @Tags         Aircraft
+// @Produce      json
+// @Param        id   path      string  true  "Aircraft UUID"
+// @Success      200  {object}  utils.Response
+// @Failure      400  {object}  utils.Response
+// @Failure      401  {object}  utils.Response
+// @Failure      403  {object}  utils.Response
+// @Failure      404  {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /aircraft/{id} [delete]
 func (h *AircraftHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, ok := utils.UUIDParam(w, r, "id")
 	if !ok {
@@ -125,7 +179,21 @@ func (h *AircraftHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "success", nil)
 }
 
-// POST /aircraft/{id}/seats/generate  [admin]
+// GenerateSeats godoc
+// @Summary      Generate kursi aircraft
+// @Description  Membuat konfigurasi kursi aircraft berdasarkan layout yang diberikan. Hanya admin dan super_admin.
+// @Tags         Aircraft
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string                    true  "Aircraft UUID"
+// @Param        request  body      dto.GenerateSeatsRequest  true  "Konfigurasi layout kursi"
+// @Success      200      {object}  utils.Response{data=[]dto.AircraftSeatResponse}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      403      {object}  utils.Response
+// @Failure      404      {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /aircraft/{id}/seats/generate [post]
 func (h *AircraftHandler) GenerateSeats(w http.ResponseWriter, r *http.Request) {
 	id, ok := utils.UUIDParam(w, r, "id")
 	if !ok {

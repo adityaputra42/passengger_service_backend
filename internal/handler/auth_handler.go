@@ -23,16 +23,17 @@ func NewAuthHandler(authService services.AuthService, ctx context.Context) *Auth
 	}
 }
 
-// SignIn - POST /api/auth/login
-// @Summary SignIn user
-// @Description Login with email and password to get access token
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param request body models.LoginRequest true "Login request"
-// @Success 200 {object} utils.Response{data=models.TokenResponse} "Login successful"
-// @Failure 401 {object} utils.Response "Invalid credentials"
-// @Router /auth/login [post]
+// SignIn godoc
+// @Summary      Login penumpang/customer
+// @Description  Login dengan email dan password. Mengembalikan access token dan refresh token.
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.LoginRequest  true  "Kredensial login"
+// @Success      200      {object}  utils.Response{data=dto.AuthResponseDTO}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response  "Email atau password salah"
+// @Router       /auth/login [post]
 func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginRequest
 
@@ -50,16 +51,17 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "Login successful", resp)
 }
 
-// SignIn - POST /api/auth/admin/login
-// @Summary SignIn Admin
-// @Description Login with email and password to get access token
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param request body models.LoginRequest true "Login request"
-// @Success 200 {object} utils.Response{data=models.TokenResponse} "Login successful"
-// @Failure 401 {object} utils.Response "Invalid credentials"
-// @Router /auth/login [post]
+// AdminLogin godoc
+// @Summary      Login admin
+// @Description  Login khusus untuk admin (level >= 3). Customer tidak bisa login di sini.
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.LoginRequest  true  "Kredensial login admin"
+// @Success      200      {object}  utils.Response{data=dto.AuthResponseDTO}
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response  "Bukan admin atau kredensial salah"
+// @Router       /auth/admin/login [post]
 func (h *AuthHandler) AdminLogin(w http.ResponseWriter, r *http.Request) {
 	var req dto.LoginRequest
 
@@ -77,7 +79,17 @@ func (h *AuthHandler) AdminLogin(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "Login successful", resp)
 }
 
-// POST /auth/refresh
+// Refresh godoc
+// @Summary      Refresh access token
+// @Description  Mendapatkan access token baru menggunakan refresh token yang masih valid.
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body  object{refresh_token=string}  true  "Refresh token"
+// @Success      200  {object}  utils.Response{data=dto.AuthResponseDTO}
+// @Failure      400  {object}  utils.Response
+// @Failure      401  {object}  utils.Response  "Refresh token tidak valid atau expired"
+// @Router       /auth/refresh [post]
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		RefreshToken string `json:"refresh_token"`
@@ -99,7 +111,15 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "Login successful", result)
 }
 
-// POST /auth/logout  [AuthRequired]
+// Logout godoc
+// @Summary      Logout
+// @Description  Logout dari sesi yang sedang aktif.
+// @Tags         Auth
+// @Produce      json
+// @Success      200  {object}  utils.Response
+// @Failure      401  {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /auth/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	uid := middleware.GetUserIDFromContext(r)
@@ -116,7 +136,15 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "Logout successful", nil)
 }
 
-// GET /auth/me  [AuthRequired]
+// Me godoc
+// @Summary      Profil user yang sedang login
+// @Description  Mengambil data user berdasarkan token yang dikirimkan.
+// @Tags         Auth
+// @Produce      json
+// @Success      200  {object}  utils.Response{data=dto.UserResponse}
+// @Failure      401  {object}  utils.Response
+// @Security     BearerAuth
+// @Router       /auth/me [get]
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	uid := middleware.GetUserIDFromContext(r)
 	if uid == &uuid.Nil {
@@ -131,7 +159,19 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, "Logout successful", user)
 }
 
-// PUT /auth/change-password  [AuthRequired]
+// ChangePassword godoc
+// @Summary      Ganti password
+// @Description  Mengganti password user yang sedang login.
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.ChangePasswordRequest  true  "Password lama dan baru"
+// @Success      200      {object}  utils.Response
+// @Failure      400      {object}  utils.Response
+// @Failure      401      {object}  utils.Response
+// @Failure      422      {object}  utils.Response  "Password lama tidak sesuai"
+// @Security     BearerAuth
+// @Router       /auth/change-password [put]
 func (h *AuthHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	uid := middleware.GetUserIDFromContext(r)
 	if uid == &uuid.Nil {
