@@ -7,6 +7,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type FlightRequest struct {
+	DepartureCode string    `json:"departure_code" validate:",len=3"`
+	ArrivalCode   string    `json:"arrival_code"   validate:",len=3"`
+	Date          time.Time `json:"date"           `
+}
 
 type SearchFlightRequest struct {
 	DepartureCode string    `json:"departure_code" validate:"required,len=3"`
@@ -36,11 +41,11 @@ type FlightSeatResult struct {
 // ─────────────────────────────────────────────
 
 type FlightSeatResponse struct {
-	ID           uuid.UUID             `json:"id"`
-	FlightID     *uuid.UUID            `json:"flight_id"`
-	Price        float64               `json:"price"`
+	ID           uuid.UUID               `json:"id"`
+	FlightID     *uuid.UUID              `json:"flight_id"`
+	Price        float64                 `json:"price"`
 	Status       models.FlightSeatStatus `json:"status"`
-	AircraftSeat *AircraftSeatResponse `json:"aircraft_seat"`
+	AircraftSeat *AircraftSeatResponse   `json:"aircraft_seat"`
 }
 
 func ToFlightSeatResponse(fs *models.FlightSeat) *FlightSeatResponse {

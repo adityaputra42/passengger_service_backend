@@ -71,7 +71,7 @@ func (r *CachedFlightRepository) FindWithDetails(ctx context.Context, id uuid.UU
 	return result, nil
 }
 
-func (r *CachedFlightRepository) FindAvailable(ctx context.Context, depID, arrID uuid.UUID, date time.Time) ([]models.Flight, error) {
+func (r *CachedFlightRepository) FindAvailable(ctx context.Context, depID, arrID *uuid.UUID, date time.Time) ([]models.Flight, error) {
 	key := fmt.Sprintf("flight:search:%s:%s:%s", depID, arrID, date.Format("2006-01-02"))
 	var flights []models.Flight
 	if err := r.cache.Get(ctx, key, &flights); err == nil {

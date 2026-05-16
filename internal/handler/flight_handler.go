@@ -61,6 +61,57 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// GetAll godoc
+// @Summary      Mengambil semua penerbangan untuk admin
+// @Description  Mengambil daftar penerbangan dengan filter optional berdasarkan rute dan tanggal.
+// @Tags         Flight
+// @Produce      json
+// @Param        dep   query     string  false  "Kode IATA keberangkatan"  example(CGK)
+// @Param        arr   query     string  false  "Kode IATA tujuan"         example(DPS)
+// @Param        date  query     string  false  "Tanggal (YYYY-MM-DD)"     example(2026-05-15)
+// @Success      200   {object}  utils.Response{data=dto.FlightListResponse}
+// @Failure      400   {object}  utils.Response
+// @Router       /flights [get]
+func (h *FlightHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	dep := r.URL.Query().Get("dep")
+	arr := r.URL.Query().Get("arr")
+	dateStr := r.URL.Query().Get("date")
+
+	var date time.Time
+	var err error
+
+	if dateStr != "" {
+		date, err = time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			utils.WriteError(
+				w,
+				http.StatusBadRequest,
+				"format date tidak valid, gunakan YYYY-MM-DD",
+				fmt.Errorf("format date tidak valid"),
+			)
+			return
+		}
+	}
+
+	results, err := h.svc.Search(r.Context(), dto.SearchFlightRequest{
+		DepartureCode: dep,
+		ArrivalCode:   arr,
+		Date:          date,
+	})
+
+	if err != nil {
+		utils.WriteServiceError(w, err)
+		return
+	}
+
+	utils.WriteJSON(
+		w,
+		http.StatusOK,
+		"success",
+		dto.ToFlightSearchResponseList(results),
+	)
+}
+
 // Get godoc
 // @Summary      Detail penerbangan
 // @Description  Mengambil detail satu penerbangan beserta jadwal dan aircraft. Endpoint ini bersifat publik.

@@ -2642,6 +2642,67 @@ const docTemplate = `{
                 }
             }
         },
+        "/flights": {
+            "get": {
+                "description": "Mengambil daftar penerbangan dengan filter optional berdasarkan rute dan tanggal.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Flight"
+                ],
+                "summary": "Mengambil semua penerbangan untuk admin",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "CGK",
+                        "description": "Kode IATA keberangkatan",
+                        "name": "dep",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "DPS",
+                        "description": "Kode IATA tujuan",
+                        "name": "arr",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "2026-05-15",
+                        "description": "Tanggal (YYYY-MM-DD)",
+                        "name": "date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.FlightListResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/flights/generate": {
             "post": {
                 "security": [

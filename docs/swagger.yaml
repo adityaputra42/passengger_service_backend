@@ -2824,6 +2824,45 @@ paths:
       summary: Today's flights
       tags:
       - Dashboard
+  /flights:
+    get:
+      description: Mengambil daftar penerbangan dengan filter optional berdasarkan
+        rute dan tanggal.
+      parameters:
+      - description: Kode IATA keberangkatan
+        example: CGK
+        in: query
+        name: dep
+        type: string
+      - description: Kode IATA tujuan
+        example: DPS
+        in: query
+        name: arr
+        type: string
+      - description: Tanggal (YYYY-MM-DD)
+        example: "2026-05-15"
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.FlightListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.Response'
+      summary: Mengambil semua penerbangan untuk admin
+      tags:
+      - Flight
   /flights/{id}:
     get:
       description: Mengambil detail satu penerbangan beserta jadwal dan aircraft.

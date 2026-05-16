@@ -33,6 +33,7 @@ func FlightRoutes(r chi.Router, h *handler.FlightHandler, deps Dependencies) {
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware)
 			r.Use(adminMiddleware)
+			r.Get("/", h.GetAll)
 			r.Post("/generate", h.Generate)
 			r.Patch("/{id}/status", h.UpdateStatus)
 		})

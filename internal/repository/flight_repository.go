@@ -14,7 +14,7 @@ type FlightRepository interface {
 	Create(ctx context.Context, flight *models.Flight) error
 	BulkCreate(ctx context.Context, flights []models.Flight) error
 	FindByID(ctx context.Context, id uuid.UUID) (*models.Flight, error)
-	FindAvailable(ctx context.Context, depAirportID, arrAirportID uuid.UUID, date time.Time) ([]models.Flight, error)
+	FindAvailable(ctx context.Context, depAirportID, arrAirportID *uuid.UUID, date time.Time) ([]models.Flight, error)
 	FindBySchedule(ctx context.Context, scheduleID uuid.UUID) ([]models.Flight, error)
 	FindByStatus(ctx context.Context, status models.FlightStatus) ([]models.Flight, error)
 	FindWithDetails(ctx context.Context, id uuid.UUID) (*models.Flight, error)
@@ -58,34 +58,83 @@ func (r *FlightRepositoryImpl) FindByID(ctx context.Context, id uuid.UUID) (*mod
 
 // FindAvailable searches flights by route and date with available seats.
 // Joins through schedule to get departure/arrival airport.
-func (r *FlightRepositoryImpl) FindAvailable(ctx context.Context, depAirportID, arrAirportID uuid.UUID, date time.Time) ([]models.Flight, error) {
+func (r *FlightRepositoryImpl) FindAvailable(
+	ctx context.Context,
+	depAirportID *uuid.UUID,
+	arrAirportID *uuid.UUID,
+	date time.Time,
+) ([]models.Flight, error) {
+
 	var flights []models.Flight
 
-	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
-	endOfDay := startOfDay.Add(24 * time.Hour)
-
-	if err := r.db.WithContext(ctx).
+	query := r.db.WithContext(ctx).
 		Preload("Schedule").
 		Preload("Schedule.DepartureAirport").
 		Preload("Schedule.ArrivalAirport").
 		Preload("Aircraft").
-		Joins("JOIN flight_schedules ON flight_schedules.id = flights.schedule_id").
-		Where(`
-			flight_schedules.departure_airport_id = ?
-			AND flight_schedules.arrival_airport_id = ?
-			AND flights.departure_time >= ?
+		Joins("JOIN flight_schedules ON flight_schedules.id = flights.schedule_id")
+
+	// optional departure filter
+	if depAirportID != nil {
+		query = query.Where(
+			"flight_schedules.departure_airport_id = ?",
+			*depAirportID,
+		)
+	}
+
+	// optional arrival filter
+	if arrAirportID != nil {
+		query = query.Where(
+			"flight_schedules.arrival_airport_id = ?",
+			*arrAirportID,
+		)
+	}
+
+	// optional date filter
+	if !date.IsZero() {
+
+		startOfDay := time.Date(
+			date.Year(),
+			date.Month(),
+			date.Day(),
+			0, 0, 0, 0,
+			date.Location(),
+		)
+
+		endOfDay := startOfDay.Add(
+			24 * time.Hour,
+		)
+
+		query = query.Where(
+			`
+			flights.departure_time >= ?
 			AND flights.departure_time < ?
-			AND flights.status NOT IN (?)
-		`, depAirportID, arrAirportID, startOfDay, endOfDay,
-			[]string{string(models.FlightStatusCancelled), string(models.FlightStatusArrived)},
-		).
+			`,
+			startOfDay,
+			endOfDay,
+		)
+	}
+
+	query = query.Where(
+		"flights.status NOT IN ?",
+		[]string{
+			string(models.FlightStatusCancelled),
+			string(models.FlightStatusArrived),
+		},
+	)
+
+	if err := query.
 		Order("flights.departure_time ASC").
 		Find(&flights).Error; err != nil {
-		return nil, fmt.Errorf("FlightRepo.FindAvailable: %w", err)
+
+		return nil, fmt.Errorf(
+			"FlightRepo.FindAvailable: %w",
+			err,
+		)
 	}
+
 	return flights, nil
 }
-
 func (r *FlightRepositoryImpl) FindBySchedule(ctx context.Context, scheduleID uuid.UUID) ([]models.Flight, error) {
 	var flights []models.Flight
 	if err := r.db.WithContext(ctx).

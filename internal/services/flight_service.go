@@ -15,6 +15,7 @@ import (
 
 type FlightService interface {
 	Search(ctx context.Context, req dto.SearchFlightRequest) ([]dto.FlightResult, error)
+	GetAll(ctx context.Context, req dto.FlightRequest) ([]dto.FlightResult, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*models.Flight, error)
 	GetSeatMap(ctx context.Context, flightID uuid.UUID) ([]dto.FlightSeatResult, error)
 	// Generate flights from a schedule for a date range
@@ -50,6 +51,156 @@ func NewFlightService(
 	}
 }
 
+// GetAll implements [FlightService].
+func (s *flightService) GetAll(
+	ctx context.Context,
+	req dto.FlightRequest,
+) ([]dto.FlightResult, error) {
+
+	var (
+		dep *models.Airport
+		arr *models.Airport
+	)
+
+	g, gctx := errgroup.WithContext(ctx)
+
+	// departure optional
+	if req.DepartureCode != "" {
+
+		g.Go(func() error {
+
+			var err error
+
+			dep, err = s.airportRepo.FindByCode(
+				gctx,
+				req.DepartureCode,
+			)
+
+			if err != nil {
+				return utils.ErrAirportNotFound
+			}
+
+			return nil
+		})
+	}
+
+	// arrival optional
+	if req.ArrivalCode != "" {
+
+		g.Go(func() error {
+
+			var err error
+
+			arr, err = s.airportRepo.FindByCode(
+				gctx,
+				req.ArrivalCode,
+			)
+
+			if err != nil {
+				return utils.ErrAirportNotFound
+			}
+
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	var depID *uuid.UUID
+	var arrID *uuid.UUID
+
+	if dep != nil {
+		depID = &dep.ID
+	}
+
+	if arr != nil {
+		arrID = &arr.ID
+	}
+
+	flights, err := s.flightRepo.FindAvailable(
+		ctx,
+		depID,
+		arrID,
+		req.Date,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	type enriched struct {
+		idx    int
+		result dto.FlightResult
+		err    error
+	}
+
+	ch := make(chan enriched, len(flights))
+
+	for i, f := range flights {
+
+		go func(idx int, flight models.Flight) {
+
+			available, err := s.flightSeatRepo.CountAvailable(
+				ctx,
+				flight.ID,
+			)
+
+			if err != nil {
+				ch <- enriched{
+					idx: idx,
+					err: err,
+				}
+				return
+			}
+
+			seats, _ := s.flightSeatRepo.FindAvailableByFlight(
+				ctx,
+				flight.ID,
+			)
+
+			var lowestPrice float64
+
+			for _, seat := range seats {
+				if lowestPrice == 0 ||
+					seat.Price < lowestPrice {
+
+					lowestPrice = seat.Price
+				}
+			}
+
+			ch <- enriched{
+				idx: idx,
+				result: dto.FlightResult{
+					Flight:         flight,
+					AvailableSeats: available,
+					LowestPrice:    lowestPrice,
+				},
+			}
+
+		}(i, f)
+	}
+
+	results := make(
+		[]dto.FlightResult,
+		len(flights),
+	)
+
+	for range flights {
+
+		e := <-ch
+
+		if e.err != nil {
+			continue
+		}
+
+		results[e.idx] = e.result
+	}
+
+	return results, nil
+}
+
 // Search finds available flights on a given date for a route.// internal/services/flight_service.go
 
 func (s *flightService) Search(ctx context.Context, req dto.SearchFlightRequest) ([]dto.FlightResult, error) {
@@ -79,7 +230,7 @@ func (s *flightService) Search(ctx context.Context, req dto.SearchFlightRequest)
 		return nil, err
 	}
 
-	flights, err := s.flightRepo.FindAvailable(ctx, dep.ID, arr.ID, req.Date)
+	flights, err := s.flightRepo.FindAvailable(ctx, &dep.ID, &arr.ID, req.Date)
 	if err != nil {
 		return nil, err
 	}
