@@ -85,10 +85,13 @@ func InitializeAllHandler(cfg *config.Config, ctx context.Context) (*Handler, er
 	roleHandler := handler.NewRoleHandler(roleService)
 	userService := services.NewUserService(userRepository, roleRepository)
 	userHandler := handler.NewUserHandler(userService)
+	dashboardRepository := repository.NewDashboardRepository(db)
+	dashboardService := services.NewDashboardService(dashboardRepository)
+	dashboardHandler := handler.NewDashboardHandler(dashboardService)
 	rbacRepositoryImpl := repository.NewRBACRepository(db)
 	cachedRBACRepository := repository.NewCachedRBACRepository(rbacRepositoryImpl, client)
 	rbacService := services.NewRBACService(cachedRBACRepository)
-	injectionHandler := NewHandler(aircraftHandler, airportHandler, authHandler, baggageHandler, boardingPassHandler, bookingHandler, checkinHandler, flightHandler, flightScheduleHandler, paymentHandler, roleHandler, userHandler, rbacService, userService, jwtService)
+	injectionHandler := NewHandler(aircraftHandler, airportHandler, authHandler, baggageHandler, boardingPassHandler, bookingHandler, checkinHandler, flightHandler, flightScheduleHandler, paymentHandler, roleHandler, userHandler, dashboardHandler, rbacService, userService, jwtService)
 	return injectionHandler, nil
 }
 
@@ -112,7 +115,7 @@ func ProvideCache(cfg *config.Config) (*cache.Client, error) {
 }
 
 var repositorySet = wire.NewSet(
-	ProvideDB, repository.NewAircraftRepository, repository.NewAirportRepository, repository.NewAircraftSeatRepository, repository.NewBaggageRepository, repository.NewBoardingPassRepository, repository.NewCheckinRepository, repository.NewPaymentRepository, repository.NewPermissionRepository, repository.NewRBACRepository, repository.NewFlightRepository, repository.NewFlightSeatRepository, repository.NewFlightScheduleRepository, repository.NewMealRepository, repository.NewUserReposiory, repository.NewPassengerMealRepository, repository.NewPassengerSSRRepository, repository.NewRoleRepository, repository.NewPNRContactRepository, repository.NewPNRPassengerRepository, repository.NewPNRRepository, repository.NewPNRSegmentRepository, repository.NewSeatAssignmentRepository, repository.NewSeatClassRepository, repository.NewSeatLockRepository, repository.NewSSRTypeRepository, repository.NewTicketRepository, repository.NewTicketSegmentRepository, repository.NewCachedAircraftRepository, repository.NewCachedAirportRepository, repository.NewCachedRBACRepository, repository.NewCachedFlightRepository, repository.NewCachedFlightSeatRepository, repository.NewCachedFlightScheduleRepository, repository.NewCachedPNRRepository, wire.Bind(new(repository.AircraftRepository), new(*repository.CachedAircraftRepository)), wire.Bind(new(repository.AirportRepository), new(*repository.CachedAirportRepository)), wire.Bind(new(repository.RBACRepository), new(*repository.CachedRBACRepository)), wire.Bind(new(repository.FlightRepository), new(*repository.CachedFlightRepository)), wire.Bind(new(repository.FlightSeatRepository), new(*repository.CachedFlightSeatRepository)), wire.Bind(new(repository.FlightScheduleRepository), new(*repository.CachedFlightScheduleRepository)), wire.Bind(new(repository.PNRRepository), new(*repository.CachedPNRRepository)),
+	ProvideDB, repository.NewAircraftRepository, repository.NewAirportRepository, repository.NewAircraftSeatRepository, repository.NewBaggageRepository, repository.NewBoardingPassRepository, repository.NewCheckinRepository, repository.NewPaymentRepository, repository.NewPermissionRepository, repository.NewRBACRepository, repository.NewFlightRepository, repository.NewFlightSeatRepository, repository.NewFlightScheduleRepository, repository.NewMealRepository, repository.NewUserReposiory, repository.NewPassengerMealRepository, repository.NewPassengerSSRRepository, repository.NewRoleRepository, repository.NewPNRContactRepository, repository.NewPNRPassengerRepository, repository.NewPNRRepository, repository.NewPNRSegmentRepository, repository.NewSeatAssignmentRepository, repository.NewSeatClassRepository, repository.NewSeatLockRepository, repository.NewSSRTypeRepository, repository.NewTicketRepository, repository.NewTicketSegmentRepository, repository.NewDashboardRepository, repository.NewCachedAircraftRepository, repository.NewCachedAirportRepository, repository.NewCachedRBACRepository, repository.NewCachedFlightRepository, repository.NewCachedFlightSeatRepository, repository.NewCachedFlightScheduleRepository, repository.NewCachedPNRRepository, wire.Bind(new(repository.AircraftRepository), new(*repository.CachedAircraftRepository)), wire.Bind(new(repository.AirportRepository), new(*repository.CachedAirportRepository)), wire.Bind(new(repository.RBACRepository), new(*repository.CachedRBACRepository)), wire.Bind(new(repository.FlightRepository), new(*repository.CachedFlightRepository)), wire.Bind(new(repository.FlightSeatRepository), new(*repository.CachedFlightSeatRepository)), wire.Bind(new(repository.FlightScheduleRepository), new(*repository.CachedFlightScheduleRepository)), wire.Bind(new(repository.PNRRepository), new(*repository.CachedPNRRepository)),
 )
 
 var utilsSet = wire.NewSet(
@@ -120,9 +123,9 @@ var utilsSet = wire.NewSet(
 	ProvideCache,
 )
 
-var serviceSet = wire.NewSet(services.NewAircraftService, services.NewAirportService, services.NewAuthService, services.NewBaggageService, services.NewBoardingPassService, services.NewBookingService, services.NewCheckinService, services.NewFlightScheduleService, services.NewFlightService, services.NewPaymentService, services.NewRBACService, services.NewRoleService, services.NewSeatLockService, services.NewTicketService, services.NewUserService)
+var serviceSet = wire.NewSet(services.NewAircraftService, services.NewAirportService, services.NewAuthService, services.NewBaggageService, services.NewBoardingPassService, services.NewBookingService, services.NewCheckinService, services.NewFlightScheduleService, services.NewFlightService, services.NewPaymentService, services.NewRBACService, services.NewRoleService, services.NewSeatLockService, services.NewTicketService, services.NewUserService, services.NewDashboardService)
 
-var handlerSet = wire.NewSet(handler.NewAircraftHandler, handler.NewAirportHandler, handler.NewAuthHandler, handler.NewBaggageHandler, handler.NewBoardingPassHandler, handler.NewBookingHandler, handler.NewCheckinHandler, handler.NewFlightHandler, handler.NewFlightScheduleHandler, handler.NewPaymentHandler, handler.NewUserHandler, handler.NewRoleHandler)
+var handlerSet = wire.NewSet(handler.NewAircraftHandler, handler.NewAirportHandler, handler.NewAuthHandler, handler.NewBaggageHandler, handler.NewBoardingPassHandler, handler.NewBookingHandler, handler.NewCheckinHandler, handler.NewFlightHandler, handler.NewFlightScheduleHandler, handler.NewPaymentHandler, handler.NewUserHandler, handler.NewRoleHandler, handler.NewDashboardHandler)
 
 type Handler struct {
 	AircraftHandler       *handler.AircraftHandler
@@ -137,6 +140,7 @@ type Handler struct {
 	PaymentHandler        *handler.PaymentHandler
 	RoleHandler           *handler.RoleHandler
 	UserHandler           *handler.UserHandler
+	DashboardHandler      *handler.DashboardHandler
 
 	RBACService services.RBACService
 	UserService services.UserService
@@ -156,6 +160,7 @@ func NewHandler(
 	paymentHandler *handler.PaymentHandler,
 	roleHandler *handler.RoleHandler,
 	userHandler *handler.UserHandler,
+	dashboardHandler *handler.DashboardHandler,
 	rbacService services.RBACService,
 	userService services.UserService,
 	jwtService *utils.JWTService,
@@ -173,6 +178,7 @@ func NewHandler(
 		PaymentHandler:        paymentHandler,
 		UserHandler:           userHandler,
 		RoleHandler:           roleHandler,
+		DashboardHandler:      dashboardHandler,
 		RBACService:           rbacService,
 		UserService:           userService,
 		JWTService:            jwtService,

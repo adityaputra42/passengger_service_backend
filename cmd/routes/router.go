@@ -69,6 +69,7 @@ func SetupRoutes(handler *injection.Handler, logger *zap.Logger, cfg config.CORS
 		FlightRoutes(api, handler.FlightHandler, deps)
 		FlightScheduleRoutes(api, handler.FlightScheduleHandler, deps)
 		PaymentRoutes(api, handler.PaymentHandler, deps)
+		DashboardRoutes(api, handler.DashboardHandler, deps)
 
 	})
 	return r

@@ -141,6 +141,13 @@ definitions:
       segment_id:
         type: string
     type: object
+  dto.BookingStatusResponse:
+    properties:
+      status:
+        type: string
+      value:
+        type: integer
+    type: object
   dto.ChangePasswordRequest:
     properties:
       new_password:
@@ -302,6 +309,17 @@ definitions:
     required:
     - password
     - role_id
+    type: object
+  dto.DashboardSummaryResponse:
+    properties:
+      today_flights:
+        type: integer
+      total_bookings:
+        type: integer
+      total_passengers:
+        type: integer
+      total_revenue:
+        type: number
     type: object
   dto.FlightListResponse:
     properties:
@@ -588,6 +606,26 @@ definitions:
       status:
         $ref: '#/definitions/models.PaymentStatus'
     type: object
+  dto.RecentBookingResponse:
+    properties:
+      booking_code:
+        type: string
+      id:
+        type: integer
+      passenger_name:
+        type: string
+      payment_status:
+        type: string
+      route:
+        type: string
+    type: object
+  dto.RevenueTrendResponse:
+    properties:
+      date:
+        type: string
+      revenue:
+        type: number
+    type: object
   dto.RoleInput:
     properties:
       description:
@@ -697,6 +735,25 @@ definitions:
       issued_at:
         type: string
       ticket_number:
+        type: string
+    type: object
+  dto.TodayFlightResponse:
+    properties:
+      aircraft:
+        type: string
+      departure_time:
+        type: string
+      destination:
+        type: string
+      flight_number:
+        type: string
+      id:
+        type: integer
+      origin:
+        type: string
+      passenger_count:
+        type: integer
+      status:
         type: string
     type: object
   dto.TripType:
@@ -2627,6 +2684,146 @@ paths:
       summary: Riwayat check-in penumpang
       tags:
       - CheckIn
+  /dashboard/booking-status:
+    get:
+      description: Mendapatkan distribusi status booking
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.BookingStatusResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Booking status distribution
+      tags:
+      - Dashboard
+  /dashboard/recent-bookings:
+    get:
+      description: Mendapatkan booking terbaru
+      parameters:
+      - default: 10
+        description: Limit data
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RecentBookingResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Recent bookings
+      tags:
+      - Dashboard
+  /dashboard/revenue-trend:
+    get:
+      description: Mendapatkan trend revenue harian
+      parameters:
+      - default: 7
+        description: Jumlah hari
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.RevenueTrendResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Revenue trend
+      tags:
+      - Dashboard
+  /dashboard/summary:
+    get:
+      description: Mendapatkan statistik utama dashboard PSS
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.DashboardSummaryResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Dashboard summary
+      tags:
+      - Dashboard
+  /dashboard/today-flights:
+    get:
+      description: Mendapatkan daftar penerbangan hari ini
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.TodayFlightResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.Response'
+      security:
+      - BearerAuth: []
+      summary: Today's flights
+      tags:
+      - Dashboard
   /flights/{id}:
     get:
       description: Mengambil detail satu penerbangan beserta jadwal dan aircraft.

@@ -72,6 +72,7 @@ var repositorySet = wire.NewSet(
 	repository.NewSSRTypeRepository,
 	repository.NewTicketRepository,
 	repository.NewTicketSegmentRepository,
+	repository.NewDashboardRepository,
 
 	// ── Cached wrappers ──
 	repository.NewCachedAircraftRepository,
@@ -113,6 +114,7 @@ var serviceSet = wire.NewSet(
 	services.NewSeatLockService,
 	services.NewTicketService,
 	services.NewUserService,
+	services.NewDashboardService,
 )
 
 var handlerSet = wire.NewSet(
@@ -128,6 +130,7 @@ var handlerSet = wire.NewSet(
 	handler.NewPaymentHandler,
 	handler.NewUserHandler,
 	handler.NewRoleHandler,
+	handler.NewDashboardHandler,
 )
 
 func InitializeAllHandler(cfg *config.Config, ctx context.Context) (*Handler, error) {
@@ -154,6 +157,7 @@ type Handler struct {
 	PaymentHandler        *handler.PaymentHandler
 	RoleHandler           *handler.RoleHandler
 	UserHandler           *handler.UserHandler
+	DashboardHandler      *handler.DashboardHandler
 
 	RBACService services.RBACService
 	UserService services.UserService
@@ -173,6 +177,7 @@ func NewHandler(
 	paymentHandler *handler.PaymentHandler,
 	roleHandler *handler.RoleHandler,
 	userHandler *handler.UserHandler,
+	dashboardHandler *handler.DashboardHandler,
 	rbacService services.RBACService,
 	userService services.UserService,
 	jwtService *utils.JWTService,
@@ -190,6 +195,7 @@ func NewHandler(
 		PaymentHandler:        paymentHandler,
 		UserHandler:           userHandler,
 		RoleHandler:           roleHandler,
+		DashboardHandler:      dashboardHandler,
 		RBACService:           rbacService,
 		UserService:           userService,
 		JWTService:            jwtService,
