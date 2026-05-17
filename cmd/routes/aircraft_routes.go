@@ -21,12 +21,11 @@ func AirchaftRoutes(r chi.Router, h *handler.AircraftHandler, deps Dependencies)
 	adminMiddleware := middleware.RequireAdminArea(deps.RBACService)
 
 	r.Route("/aircraft", func(r chi.Router) {
-		// Public read endpoints
+
 		r.Get("/", h.List)
 		r.Get("/{id}", h.Get)
 		r.Get("/{id}/seats", h.GetWithSeats)
 
-		// Admin-only write endpoints
 		r.Group(func(r chi.Router) {
 			r.Use(authMiddleware)
 			r.Use(adminMiddleware)

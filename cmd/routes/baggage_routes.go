@@ -1,13 +1,5 @@
 package routes
 
-// ============================================================
-// baggage_routes.go
-// ============================================================
-//
-// Baggage routes:
-//   POST /baggage                           → authenticated (agent+ to add baggage)
-//   GET  /baggage/passenger/{passengerID}   → authenticated
-//   PUT  /baggage/{id}/status               → agent+ (airport staff updating status)
 
 import (
 	"passenger_service_backend/internal/handler"

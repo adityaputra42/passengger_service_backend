@@ -7,14 +7,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Airport routes:
-//   GET  /airport           → authenticated users (customers need this for flight search)
-//   GET  /airport/{id}      → authenticated
-//   GET  /airport/code/{code} → authenticated
-//   POST /airport           → admin+ only
-//   PUT  /airport/{id}      → admin+ only
-//   DELETE /airport/{id}    → admin+ only
-
 func AirportRoutes(r chi.Router, h *handler.AirportHandler, deps Dependencies) {
 	authMiddleware := middleware.AuthMiddleware(deps.UserService, deps.JWTService)
 	adminMiddleware := middleware.RequireAdminArea(deps.RBACService)

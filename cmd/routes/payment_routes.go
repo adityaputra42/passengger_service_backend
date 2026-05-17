@@ -7,15 +7,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// ============================================================
-// payment_routes.go
-// ============================================================
-// Payment routes:
-//   POST /payments              → authenticated (initiate payment for own booking)
-//   GET  /payments?pnr_id=      → authenticated (view own payments)
-//   POST /payments/{id}/confirm → admin+ (payment gateway callback / internal webhook)
-//   POST /payments/{id}/refund  → admin+ (process refund)
-
 func PaymentRoutes(r chi.Router, h *handler.PaymentHandler, deps Dependencies) {
 	authMiddleware := middleware.AuthMiddleware(deps.UserService, deps.JWTService)
 	adminMiddleware := middleware.RequireAdminArea(deps.RBACService)
