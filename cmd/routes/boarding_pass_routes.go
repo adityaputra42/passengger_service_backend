@@ -11,7 +11,7 @@ func BoardingPassRoutes(r chi.Router, h *handler.BoardingPassHandler, deps Depen
 	authMiddleware := middleware.AuthMiddleware(deps.UserService, deps.JWTService)
 	agentMiddleware := middleware.RequireAgentOrAbove(deps.RBACService)
 
-	r.Route("/boarding_passes", func(r chi.Router) {
+	r.Route("/boarding-passes", func(r chi.Router) {
 		r.Use(authMiddleware)
 
 		r.Get("/passenger/{passengerID}/segment/{segmentID}", h.Get)

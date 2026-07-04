@@ -6,9 +6,15 @@ import (
 
 	"github.com/google/uuid"
 )
+
 type CheckinRequest struct {
 	PassengerID uuid.UUID `json:"passenger_id" validate:"required"`
 	SegmentID   uuid.UUID `json:"segment_id"   validate:"required"`
+}
+
+type CheckinGetRequest struct {
+	PassengerID uuid.UUID `json:"passenger_id"`
+	SegmentID   uuid.UUID `json:"segment_id"`
 }
 
 type CheckinResult struct {
@@ -17,10 +23,10 @@ type CheckinResult struct {
 }
 
 type CheckinResponse struct {
-	ID          uuid.UUID  `json:"id"`
-	PassengerID *uuid.UUID `json:"passenger_id"`
-	SegmentID   *uuid.UUID `json:"segment_id"`
-	CheckinTime *time.Time `json:"checkin_time"`
+	ID          uuid.UUID            `json:"id"`
+	PassengerID *models.PNRPassenger `json:"passenger"`
+	SegmentID   *models.PNRSegment   `json:"segment_id"`
+	CheckinTime *time.Time           `json:"checkin_time"`
 }
 
 func ToCheckinResponse(c *models.Checkin) *CheckinResponse {
@@ -29,8 +35,8 @@ func ToCheckinResponse(c *models.Checkin) *CheckinResponse {
 	}
 	return &CheckinResponse{
 		ID:          c.ID,
-		PassengerID: c.PassengerID,
-		SegmentID:   c.SegmentID,
+		PassengerID: c.Passenger,
+		SegmentID:   c.Segment,
 		CheckinTime: c.CheckinTime,
 	}
 }

@@ -15,6 +15,7 @@ import (
 type CheckinService interface {
 	Checkin(ctx context.Context, req dto.CheckinRequest) (*dto.CheckinResult, error)
 	GetByPassenger(ctx context.Context, passengerID uuid.UUID) ([]models.Checkin, error)
+	GetAll(ctx context.Context, req *dto.CheckinGetRequest) ([]models.Checkin, error)
 	IsCheckedIn(ctx context.Context, passengerID, segmentID uuid.UUID) (bool, error)
 }
 
@@ -118,6 +119,24 @@ func (s *checkinService) Checkin(ctx context.Context, req dto.CheckinRequest) (*
 	}
 
 	return &dto.CheckinResult{Checkin: checkin}, nil
+}
+
+// GetAll implements [CheckinService].
+func (s *checkinService) GetAll(ctx context.Context, req *dto.CheckinGetRequest) ([]models.Checkin, error) {
+
+	filter := &dto.CheckinGetRequest{}
+
+	if req != nil {
+		filter.PassengerID = req.PassengerID
+		filter.SegmentID = req.SegmentID
+	}
+
+	checkins, err := s.checkinRepo.FindAll(ctx, (*uuid.UUID)(&filter.PassengerID), (*uuid.UUID)(&filter.SegmentID))
+	if err != nil {
+		return nil, err
+	}
+
+	return *checkins, nil
 }
 
 func (s *checkinService) GetByPassenger(ctx context.Context, passengerID uuid.UUID) ([]models.Checkin, error) {

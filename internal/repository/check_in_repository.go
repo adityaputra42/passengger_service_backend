@@ -12,6 +12,8 @@ import (
 type CheckinRepository interface {
 	Create(ctx context.Context, checkin *models.Checkin) error
 	FindByID(ctx context.Context, id uuid.UUID) (*models.Checkin, error)
+	FindAll(ctx context.Context, passengerID *uuid.UUID,
+		segmentID *uuid.UUID) (*[]models.Checkin, error)
 	FindByPassengerID(ctx context.Context, passengerID uuid.UUID) ([]models.Checkin, error)
 	FindBySegmentID(ctx context.Context, segmentID uuid.UUID) ([]models.Checkin, error)
 	IsCheckedIn(ctx context.Context, passengerID, segmentID uuid.UUID) (bool, error)
@@ -23,6 +25,36 @@ type CheckinRepositoryImpl struct {
 
 func NewCheckinRepository(db *gorm.DB) CheckinRepository {
 	return &CheckinRepositoryImpl{db: db}
+}
+
+// FindAll implements [CheckinRepository].
+func (r *CheckinRepositoryImpl) FindAll(
+	ctx context.Context,
+	passengerID *uuid.UUID,
+	segmentID *uuid.UUID,
+) (*[]models.Checkin, error) {
+
+	var checkins []models.Checkin
+
+	query := r.db.WithContext(ctx).
+		Preload("Passenger").
+		Preload("Segment")
+
+	if passengerID != nil {
+		query = query.Where("passenger_id = ?", *passengerID)
+	}
+
+	if segmentID != nil {
+		query = query.Where("segment_id = ?", *segmentID)
+	}
+
+	if err := query.
+		Order("checkin_time DESC").
+		Find(&checkins).Error; err != nil {
+		return nil, fmt.Errorf("CheckinRepo.FindAll: %w", err)
+	}
+
+	return &checkins, nil
 }
 
 func (r *CheckinRepositoryImpl) Create(ctx context.Context, c *models.Checkin) error {
